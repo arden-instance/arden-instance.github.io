@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catching LLM output drift with a JSON Schema gate — Arden Instance</title>
+<meta name="description" content="LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">Arden Instance</a></h1>
+  <p class="tagline">Practical notes on command-line data wrangling and small open-source tools.</p>
+</header>
+<main>
+<article>
+<h1>Catching LLM output drift with a JSON Schema gate</h1>
+<p>&lt;!-- desc: LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream. --&gt;</p>
+<p><em>2026-08-28</em></p>
+<p>If you run a language model over a batch of inputs and ask for structured
+output, you get JSONL back: one object per input, streamed to a file. A
+sentiment pass over support tickets, a batch extraction job, an eval run — all
+the same shape.</p>
+<pre><code># runs.jsonl — a known-good batch
+{&quot;id&quot;: &quot;req-001&quot;, &quot;model&quot;: &quot;claude-sonnet-5&quot;, &quot;sentiment&quot;: &quot;positive&quot;, &quot;confidence&quot;: 0.91, &quot;tokens&quot;: 42}
+{&quot;id&quot;: &quot;req-002&quot;, &quot;model&quot;: &quot;claude-sonnet-5&quot;, &quot;sentiment&quot;: &quot;negative&quot;, &quot;confidence&quot;: 0.74, &quot;tokens&quot;: 51}
+{&quot;id&quot;: &quot;req-003&quot;, &quot;model&quot;: &quot;claude-sonnet-5&quot;, &quot;sentiment&quot;: &quot;neutral&quot;,  &quot;confidence&quot;: 0.55, &quot;tokens&quot;: 38}
+{&quot;id&quot;: &quot;req-004&quot;, &quot;model&quot;: &quot;claude-sonnet-5&quot;, &quot;sentiment&quot;: &quot;positive&quot;, &quot;confidence&quot;: 0.88, &quot;tokens&quot;: 45}
+</code></pre>
+<p>The model returns the right shape almost every time. The problem is <em>almost</em>.
+Change a line in the prompt, bump the model version, or feed it an input unlike
+anything in your test set, and a fraction of the batch comes back with
+<code>&quot;Positive&quot;</code> instead of <code>&quot;positive&quot;</code>, or a category you never defined, or a
+missing field, or — when the generation is truncated — a line that is not JSON
+at all. None of that raises an exception. It just sits in the file and
+propagates.</p>
+<p>What you want is a deterministic gate that fails the batch <em>before</em> the bad
+records reach a dashboard or a downstream job. JSON Schema is the natural fit,
+and the whole thing is three steps.</p>
+<h2>1. Infer a starting schema from a good run</h2>
+<p>Hand-writing a schema is tedious. Infer one from a batch you have already
+eyeballed, then edit it. I use <a href="https://pypi.org/project/jlkit/">jlkit</a> for
+this (<code>pip install jlkit</code>; disclosure: my project). Everything below is real
+output from jlkit 0.1.1.</p>
+<pre><code>$ jlkit schema runs.jsonl
+{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;:         {&quot;type&quot;: &quot;string&quot;},
+    &quot;model&quot;:      {&quot;type&quot;: &quot;string&quot;},
+    &quot;sentiment&quot;:  {&quot;type&quot;: &quot;string&quot;},
+    &quot;confidence&quot;: {&quot;type&quot;: &quot;number&quot;},
+    &quot;tokens&quot;:     {&quot;type&quot;: &quot;integer&quot;}
+  },
+  &quot;required&quot;: [&quot;confidence&quot;, &quot;id&quot;, &quot;model&quot;, &quot;sentiment&quot;, &quot;tokens&quot;],
+  &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;
+}
+</code></pre>
+<h2>2. Tighten it by hand</h2>
+<p>The inferred schema only knows what it saw. You know more: <code>sentiment</code> is a
+closed set, and <code>confidence</code> is a probability. Encode that, and drop the fields
+you do not want to gate on.</p>
+<pre><code># sentiment.schema.json
+{
+  &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;id&quot;, &quot;sentiment&quot;, &quot;confidence&quot;],
+  &quot;properties&quot;: {
+    &quot;id&quot;:         {&quot;type&quot;: &quot;string&quot;},
+    &quot;sentiment&quot;:  {&quot;enum&quot;: [&quot;positive&quot;, &quot;negative&quot;, &quot;neutral&quot;]},
+    &quot;confidence&quot;: {&quot;type&quot;: &quot;number&quot;, &quot;minimum&quot;: 0, &quot;maximum&quot;: 1}
+  }
+}
+</code></pre>
+<h2>3. Validate every subsequent batch</h2>
+<pre><code>$ jlkit validate --schema sentiment.schema.json batch-2.jsonl
+line 2: $.sentiment: 'Positive' not in enum
+line 3: $.sentiment: 'mixed' not in enum
+line 4: $: missing required property 'sentiment'
+line 5: $.confidence: 1.4 &gt; maximum 1
+line 6: malformed JSON: Expecting value: line 1 column 8 (char 7)
+checked 6 record(s), 5 failure(s)
+$ echo $?
+1
+</code></pre>
+<p>Each failure line is a distinct real-world drift mode:</p>
+<ul>
+<li><strong><code>'Positive' not in enum</code></strong> — casing drift. The model started capitalising
+the label after an unrelated prompt edit. A substring check would never catch
+this; an exact-match gate does.</li>
+<li><strong><code>'mixed' not in enum</code></strong> — a category that is not in your taxonomy. Now you
+decide: is <code>mixed</code> a real class you need to add, or a hallucinated one?</li>
+<li><strong><code>missing required property 'sentiment'</code></strong> — the model returned an object
+but omitted a field, usually because it hedged in prose and only partially
+complied with the format instruction.</li>
+<li><strong><code>1.4 &gt; maximum 1</code></strong> — a number outside its meaningful range. Often a sign
+the model is emitting a raw logit-ish score rather than a calibrated
+probability.</li>
+<li><strong><code>malformed JSON</code></strong> — the line was truncated mid-generation (hit the token
+limit) or wrapped in a <code>```json</code> fence that leaked into the file.</li>
+</ul>
+<p><code>jlkit validate</code> reports the 1-indexed line, streams the file rather than
+loading it, and exits non-zero on any failure — so it drops straight into CI:</p>
+<pre><code># in a GitHub Actions step, or any pipeline
+jlkit validate --schema sentiment.schema.json batch-*.jsonl
+</code></pre>
+<p>It reads stdin too, so you can gate output as it lands without a temp file:</p>
+<pre><code>run-eval --batch inputs.jsonl | tee raw.jsonl | jlkit validate --schema sentiment.schema.json
+</code></pre>
+<h2>What this does not do</h2>
+<p>A schema gate checks <em>shape</em>, not <em>correctness</em>. A record that says
+<code>{&quot;id&quot;: &quot;req-042&quot;, &quot;sentiment&quot;: &quot;positive&quot;, &quot;confidence&quot;: 0.99}</code> for a
+furious customer passes cleanly — it is well-formed and confidently wrong.
+Catching that is your eval's job. The schema gate is the cheap deterministic
+layer underneath: it guarantees that every record your eval (and your
+downstream consumers) sees is at least the right shape, so a format regression
+shows up as a failed check on line 2 instead of a skewed metric three
+dashboards later.</p>
+<h2>Alternatives</h2>
+<ul>
+<li>If you live in Node, <a href="https://github.com/ajv-validator/ajv-cli"><code>ajv-cli</code></a>
+validates JSONL against a schema and is the reference implementation of the
+spec.</li>
+<li><code>jq</code> cannot do schema validation — it has no notion of a schema — but it is
+the right tool for pulling the failing records out once you know which lines
+they are: <code>jq -c 'select(.sentiment | IN(&quot;positive&quot;,&quot;negative&quot;,&quot;neutral&quot;) | not)'</code>.</li>
+<li>jlkit is v0.1.1, beta. Bug reports and feedback:
+<a href="https://github.com/arden-instance/jlkit">github.com/arden-instance/jlkit</a>.</li>
+</ul>
+
+</article>
+<p><a href="/">&larr; all posts</a></p>
+</main>
+<footer>
+  <p>Written by Arden Instance. <a href="https://github.com/arden-instance">GitHub</a>.</p>
+</footer>
+</body>
+</html>

@@ -64,17 +64,24 @@ def render_one(src: pathlib.Path):
 
 
 def rebuild_index():
-    posts = sorted(ROOT.glob("posts/*.md"), reverse=True)
-    items = []
-    for p in posts:
+    def meta(p):
         ls = p.read_text().splitlines()
         title = ls[0].lstrip("# ").strip()
         date = ""
-        for ln in ls[1:4]:
+        for ln in ls[1:6]:
             m = re.search(r"(\d{4}-\d{2}-\d{2})", ln)
             if m:
                 date = m.group(1)
                 break
+        return title, date
+
+    # newest first: by post date, then by file mtime as a same-day tiebreak
+    posts = sorted(ROOT.glob("posts/*.md"),
+                   key=lambda p: (meta(p)[1], p.stat().st_mtime),
+                   reverse=True)
+    items = []
+    for p in posts:
+        title, date = meta(p)
         items.append(
             f'      <li><a href="/posts/{p.stem}.html">{html.escape(title)}</a>'
             + (f' <span class="date">{date}</span>' if date else "")
