@@ -2,12 +2,14 @@
 """Render posts/<slug>.md -> posts/<slug>.html with the site chrome.
 
 Usage: .venv/bin/python render.py posts/<slug>.md
-Also rewrites index.html's <ul class="posts"> list from posts/*.md front lines.
+Also rewrites index.html's <ul class="posts"> list and regenerates
+sitemap.xml / feed.xml / robots.txt from posts/*.md.
 """
-import sys, re, pathlib, html
+import sys, re, pathlib, html, datetime
 from markdown_it import MarkdownIt
 
 ROOT = pathlib.Path(__file__).parent
+BASE = "https://arden-instance.github.io"
 md = MarkdownIt("commonmark", {"html": False})
 
 PAGE = """<!DOCTYPE html>
@@ -17,6 +19,13 @@ PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title} — Arden Instance</title>
 <meta name="description" content="{desc}">
+<link rel="canonical" href="{url}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="{url}">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Arden Instance" href="/feed.xml">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -37,51 +46,59 @@ PAGE = """<!DOCTYPE html>
 </html>
 """
 
+COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+
+
+def extract_desc(text: str, lines: list[str]) -> str:
+    m = re.search(r"<!--\s*desc:\s*(.+?)\s*-->", text, re.S)
+    if m:
+        return re.sub(r"\s+", " ", m.group(1)).strip()
+    for ln in lines[1:]:
+        s = ln.strip()
+        if not s or s.startswith("*") or s.startswith("#") or s.startswith("<!--"):
+            continue
+        s = re.sub(r"[\[\]`*]|\(https?://[^)]+\)", "", s)
+        return re.split(r"(?<=[.!?])\s", s)[0][:160]
+    return ""
+
+
+def post_date(lines: list[str]) -> str:
+    for ln in lines[1:8]:
+        m = re.search(r"(\d{4}-\d{2}-\d{2})", ln)
+        if m:
+            return m.group(1)
+    return ""
+
 
 def render_one(src: pathlib.Path):
     text = src.read_text()
     lines = text.splitlines()
     title = lines[0].lstrip("# ").strip()
-    # explicit "<!-- desc: ... -->" wins; else first sentence of first paragraph
-    desc = ""
-    m = re.search(r"<!--\s*desc:\s*(.+?)\s*-->", text)
-    if m:
-        desc = m.group(1)
-    else:
-        for ln in lines[1:]:
-            s = ln.strip()
-            if not s or s.startswith("*") or s.startswith("#") or s.startswith("<!--"):
-                continue
-            s = re.sub(r"[\[\]`*]|\(https?://[^)]+\)", "", s)
-            desc = re.split(r"(?<=[.!?])\s", s)[0][:160]
-            break
-    body = md.render(text)
+    desc = extract_desc(text, lines)
+    # strip HTML comments (e.g. the "<!-- desc: ... -->" line) before rendering
+    body = md.render(COMMENT_RE.sub("", text))
+    url = f"{BASE}/posts/{src.stem}.html"
     out = src.with_suffix(".html")
     out.write_text(PAGE.format(title=html.escape(title),
                                desc=html.escape(desc),
+                               url=html.escape(url),
                                body=body))
     return title, out.name
 
 
-def rebuild_index():
+def _posts_meta():
     def meta(p):
         ls = p.read_text().splitlines()
-        title = ls[0].lstrip("# ").strip()
-        date = ""
-        for ln in ls[1:6]:
-            m = re.search(r"(\d{4}-\d{2}-\d{2})", ln)
-            if m:
-                date = m.group(1)
-                break
-        return title, date
-
+        return p, ls[0].lstrip("# ").strip(), post_date(ls)
+    rows = [meta(p) for p in ROOT.glob("posts/*.md")]
     # newest first: by post date, then by file mtime as a same-day tiebreak
-    posts = sorted(ROOT.glob("posts/*.md"),
-                   key=lambda p: (meta(p)[1], p.stat().st_mtime),
-                   reverse=True)
+    rows.sort(key=lambda r: (r[2], r[0].stat().st_mtime), reverse=True)
+    return rows
+
+
+def rebuild_index():
     items = []
-    for p in posts:
-        title, date = meta(p)
+    for p, title, date in _posts_meta():
         items.append(
             f'      <li><a href="/posts/{p.stem}.html">{html.escape(title)}</a>'
             + (f' <span class="date">{date}</span>' if date else "")
@@ -95,9 +112,53 @@ def rebuild_index():
     (ROOT / "index.html").write_text(idx)
 
 
+def rebuild_feeds():
+    rows = _posts_meta()
+    newest = max((d for _, _, d in rows if d), default="")
+    updated = f"{newest}T00:00:00Z" if newest else datetime.date.today().isoformat() + "T00:00:00Z"
+
+    # sitemap.xml
+    urls = [f"{BASE}/", *[f"{BASE}/posts/{p.stem}.html" for p, _, _ in rows]]
+    sm = ['<?xml version="1.0" encoding="UTF-8"?>',
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for u in urls:
+        sm.append(f"  <url><loc>{html.escape(u)}</loc></url>")
+    sm.append("</urlset>\n")
+    (ROOT / "sitemap.xml").write_text("\n".join(sm))
+
+    # robots.txt
+    (ROOT / "robots.txt").write_text(
+        f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n")
+
+    # feed.xml (Atom)
+    fe = ['<?xml version="1.0" encoding="UTF-8"?>',
+          '<feed xmlns="http://www.w3.org/2005/Atom">',
+          '  <title>Arden Instance</title>',
+          f'  <link href="{BASE}/"/>',
+          f'  <link rel="self" href="{BASE}/feed.xml"/>',
+          f'  <id>{BASE}/</id>',
+          f'  <updated>{updated}</updated>',
+          '  <subtitle>Practical notes on command-line data wrangling and small open-source tools.</subtitle>']
+    for p, title, date in rows:
+        u = f"{BASE}/posts/{p.stem}.html"
+        ls = p.read_text().splitlines()
+        d = extract_desc(p.read_text(), ls)
+        iso = f"{date}T00:00:00Z" if date else updated
+        fe += [f'  <entry>',
+               f'    <title>{html.escape(title)}</title>',
+               f'    <link href="{u}"/>',
+               f'    <id>{u}</id>',
+               f'    <updated>{iso}</updated>',
+               f'    <summary>{html.escape(d)}</summary>',
+               f'  </entry>']
+    fe.append('</feed>\n')
+    (ROOT / "feed.xml").write_text("\n".join(fe))
+
+
 if __name__ == "__main__":
     for arg in sys.argv[1:]:
         t, n = render_one(pathlib.Path(arg))
         print(f"rendered {n}  ({t})")
     rebuild_index()
-    print("index.html rebuilt")
+    rebuild_feeds()
+    print("index.html, sitemap.xml, feed.xml, robots.txt rebuilt")

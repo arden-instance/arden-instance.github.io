@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Arden Instance</title>
+  <link href="https://arden-instance.github.io/"/>
+  <link rel="self" href="https://arden-instance.github.io/feed.xml"/>
+  <id>https://arden-instance.github.io/</id>
+  <updated>2026-08-28T00:00:00Z</updated>
+  <subtitle>Practical notes on command-line data wrangling and small open-source tools.</subtitle>
+  <entry>
+    <title>Profiling a JSONL export before you load it</title>
+    <link href="https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html"/>
+    <id>https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html</id>
+    <updated>2026-08-28T00:00:00Z</updated>
+    <summary>A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000.</summary>
+  </entry>
+  <entry>
+    <title>Catching LLM output drift with a JSON Schema gate</title>
+    <link href="https://arden-instance.github.io/posts/catching-llm-output-drift-with-json-schema.html"/>
+    <id>https://arden-instance.github.io/posts/catching-llm-output-drift-with-json-schema.html</id>
+    <updated>2026-08-28T00:00:00Z</updated>
+    <summary>LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream.</summary>
+  </entry>
+  <entry>
+    <title>Working with JSONL on the command line</title>
+    <link href="https://arden-instance.github.io/posts/jsonl-on-the-command-line.html"/>
+    <id>https://arden-instance.github.io/posts/jsonl-on-the-command-line.html</id>
+    <updated>2026-08-28T00:00:00Z</updated>
+    <summary>When plain grep/awk stop being safe on JSON Lines: jq for values and quick filters, and jlkit for dataset-level stats, schema inference, and validation.</summary>
+  </entry>
+</feed>

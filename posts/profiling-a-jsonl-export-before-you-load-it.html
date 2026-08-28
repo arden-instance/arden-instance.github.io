@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Profiling a JSONL export before you load it — Arden Instance</title>
 <meta name="description" content="A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000.">
+<link rel="canonical" href="https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Profiling a JSONL export before you load it">
+<meta property="og:description" content="A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000.">
+<meta property="og:url" content="https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Arden Instance" href="/feed.xml">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -15,7 +22,6 @@
 <main>
 <article>
 <h1>Profiling a JSONL export before you load it</h1>
-<p>&lt;!-- desc: A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000. --&gt;</p>
 <p><em>2026-08-28</em></p>
 <p>Someone sends you a JSONL export — a partner data feed, an analytics dump, a
 backfill from another team — and you have to load it somewhere typed: Postgres,

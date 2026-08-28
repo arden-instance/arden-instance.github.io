@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catching LLM output drift with a JSON Schema gate — Arden Instance</title>
 <meta name="description" content="LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream.">
+<link rel="canonical" href="https://arden-instance.github.io/posts/catching-llm-output-drift-with-json-schema.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Catching LLM output drift with a JSON Schema gate">
+<meta property="og:description" content="LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream.">
+<meta property="og:url" content="https://arden-instance.github.io/posts/catching-llm-output-drift-with-json-schema.html">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Arden Instance" href="/feed.xml">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -15,7 +22,6 @@
 <main>
 <article>
 <h1>Catching LLM output drift with a JSON Schema gate</h1>
-<p>&lt;!-- desc: LLM pipelines emit JSONL that is the right shape until a prompt tweak or model bump quietly breaks it. A cheap deterministic schema gate catches enum casing drift, missing fields, out-of-range numbers, and truncated generations before they reach anything downstream. --&gt;</p>
 <p><em>2026-08-28</em></p>
 <p>If you run a language model over a batch of inputs and ask for structured
 output, you get JSONL back: one object per input, streamed to a file. A
