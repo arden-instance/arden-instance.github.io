@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profiling a JSONL export before you load it — Arden Instance</title>
+<meta name="description" content="A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">Arden Instance</a></h1>
+  <p class="tagline">Practical notes on command-line data wrangling and small open-source tools.</p>
+</header>
+<main>
+<article>
+<h1>Profiling a JSONL export before you load it</h1>
+<p>&lt;!-- desc: A vendor hands you a JSONL file to load into a warehouse. Before writing the loader, run one streaming pass with jlkit stats to find the mixed-type fields, the bare-integer IDs, and the sparse columns that will otherwise break your schema on row 100000. --&gt;</p>
+<p><em>2026-08-28</em></p>
+<p>Someone sends you a JSONL export — a partner data feed, an analytics dump, a
+backfill from another team — and you have to load it somewhere typed: Postgres,
+BigQuery, a Parquet file, a Pydantic model. The file <em>looks</em> fine. <code>head</code> shows
+clean objects. So you write a loader against the first ten lines, run it, and it
+dies two minutes in on a row that put a string where every earlier row had a
+number.</p>
+<p>The fix is to spend thirty seconds profiling the whole file first. Here is a
+small export with problems that are representative of real ones:</p>
+<pre><code># events.jsonl  (first 6 of 10 rows)
+{&quot;ts&quot;:&quot;2026-08-01T10:00:00Z&quot;,&quot;user_id&quot;:&quot;u_1001&quot;,&quot;event&quot;:&quot;signup&quot;,&quot;plan&quot;:&quot;free&quot;,&quot;revenue&quot;:0}
+{&quot;ts&quot;:&quot;2026-08-01T10:04:11Z&quot;,&quot;user_id&quot;:&quot;u_1002&quot;,&quot;event&quot;:&quot;signup&quot;,&quot;plan&quot;:&quot;free&quot;,&quot;revenue&quot;:0}
+{&quot;ts&quot;:&quot;2026-08-01T11:20:09Z&quot;,&quot;user_id&quot;:&quot;u_1001&quot;,&quot;event&quot;:&quot;upgrade&quot;,&quot;plan&quot;:&quot;pro&quot;,&quot;revenue&quot;:&quot;29.00&quot;}
+{&quot;ts&quot;:&quot;2026-08-01T12:00:47Z&quot;,&quot;user_id&quot;:&quot;u_1003&quot;,&quot;event&quot;:&quot;signup&quot;,&quot;plan&quot;:&quot;free&quot;}
+{&quot;ts&quot;:&quot;2026-08-01T12:15:22Z&quot;,&quot;user_id&quot;:&quot;u_1002&quot;,&quot;event&quot;:&quot;upgrade&quot;,&quot;plan&quot;:&quot;pro&quot;,&quot;revenue&quot;:29}
+{&quot;ts&quot;:&quot;2026-08-01T13:02:00Z&quot;,&quot;user_id&quot;:1004,&quot;event&quot;:&quot;signup&quot;,&quot;plan&quot;:&quot;free&quot;,&quot;revenue&quot;:0}
+...
+</code></pre>
+<h2>One pass with <code>jlkit stats</code></h2>
+<p><a href="https://pypi.org/project/jlkit/">jlkit</a> (<code>pip install jlkit</code>; disclosure: my
+project) has a <code>stats</code> subcommand that makes a single streaming pass and
+reports, per field, how often it appears, every type it was observed with,
+string cardinality, and a numeric summary. Everything below is real output from
+jlkit 0.1.1 over the ten-record version of that file.</p>
+<pre><code>$ jlkit stats events.jsonl
+{
+  &quot;records&quot;: 10,
+  &quot;fields&quot;: {
+    &quot;coupon&quot;: {
+      &quot;presence&quot;: 0.1,
+      &quot;null_pct&quot;: 0.0,
+      &quot;types&quot;: {&quot;string&quot;: 1},
+      &quot;string_cardinality&quot;: 1
+    },
+    &quot;revenue&quot;: {
+      &quot;presence&quot;: 0.9,
+      &quot;null_pct&quot;: 0.0,
+      &quot;types&quot;: {&quot;integer&quot;: 6, &quot;number&quot;: 2, &quot;string&quot;: 1},
+      &quot;numeric&quot;: {&quot;min&quot;: 0, &quot;max&quot;: 49.0, &quot;mean&quot;: 10.99875,
+                  &quot;stddev&quot;: 17.226506, &quot;count&quot;: 8}
+    },
+    &quot;user_id&quot;: {
+      &quot;presence&quot;: 1.0,
+      &quot;null_pct&quot;: 0.0,
+      &quot;types&quot;: {&quot;string&quot;: 9, &quot;integer&quot;: 1},
+      &quot;numeric&quot;: {&quot;min&quot;: 1004, &quot;max&quot;: 1004, &quot;mean&quot;: 1004.0,
+                  &quot;stddev&quot;: 0.0, &quot;count&quot;: 1},
+      &quot;string_cardinality&quot;: 5
+    },
+    &quot;ts&quot;:    {&quot;presence&quot;: 1.0, &quot;types&quot;: {&quot;string&quot;: 10}, &quot;string_cardinality&quot;: 10},
+    &quot;event&quot;: {&quot;presence&quot;: 1.0, &quot;types&quot;: {&quot;string&quot;: 10}, &quot;string_cardinality&quot;: 3},
+    &quot;plan&quot;:  {&quot;presence&quot;: 1.0, &quot;types&quot;: {&quot;string&quot;: 10}, &quot;string_cardinality&quot;: 3}
+  }
+}
+</code></pre>
+<p>Read the <code>types</code> map on each field. Any field with more than one key is a
+column your loader has to reconcile before it can assign a type.</p>
+<ul>
+<li><strong><code>revenue</code>: <code>{&quot;integer&quot;: 6, &quot;number&quot;: 2, &quot;string&quot;: 1}</code>.</strong> Three types. Most
+rows are numeric, but one row serialised it as <code>&quot;29.00&quot;</code> — almost certainly a
+formatting call on the sender's side that fires for some code path. If you
+declare this column <code>NUMERIC</code>, that row fails the load. If you declare it
+<code>TEXT</code>, every aggregate downstream now has to cast.</li>
+<li><strong><code>user_id</code>: <code>{&quot;string&quot;: 9, &quot;integer&quot;: 1}</code>.</strong> Nine rows quote the id, one
+emitted a bare <code>1004</code>. Load this as a string and the bare-integer row arrives
+as <code>&quot;1004&quot;</code> with no <code>u_</code> prefix, so it silently fails to join. This is the
+kind of thing that produces a &quot;why is this user missing&quot; ticket a week later.</li>
+<li><strong><code>coupon</code>: <code>presence 0.1</code>.</strong> Present on one row in ten. It is a real optional
+field, not noise — but do not make the column <code>NOT NULL</code>, and do not assume
+its absence is an error.</li>
+<li><strong><code>event</code> and <code>plan</code>: <code>string_cardinality</code> 3.</strong> Small closed sets. Good
+candidates for an <code>enum</code> / a <code>CHECK</code> constraint / a dimension table.</li>
+<li><strong><code>ts</code>: <code>string_cardinality</code> 10 out of 10.</strong> Distinct on every row, as a
+timestamp should be. <code>stats</code> will not tell you whether the <em>values</em> parse —
+more on that below.</li>
+</ul>
+<h2>Confirm the offenders</h2>
+<p><code>stats</code> tells you a problem exists; <code>filter</code> pulls the specific rows so you can
+look at them and decide what to do:</p>
+<pre><code>$ jlkit filter 'revenue contains &quot;.&quot;' events.jsonl
+{&quot;ts&quot;:&quot;2026-08-01T11:20:09Z&quot;,&quot;user_id&quot;:&quot;u_1001&quot;,&quot;event&quot;:&quot;upgrade&quot;,&quot;plan&quot;:&quot;pro&quot;,&quot;revenue&quot;:&quot;29.00&quot;}
+</code></pre>
+<p>(<code>contains</code> only matches string values, so this finds exactly the row where
+<code>revenue</code> is a string — the numeric rows are skipped.)</p>
+<h2>Turn the findings into a load gate</h2>
+<p>Once you know what &quot;clean&quot; means for this feed, encode it. <code>jlkit schema</code> gives
+you a starting point; edit it down to what you actually want to enforce:</p>
+<pre><code># events.schema.json
+{
+  &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;ts&quot;, &quot;user_id&quot;, &quot;event&quot;, &quot;plan&quot;, &quot;revenue&quot;],
+  &quot;properties&quot;: {
+    &quot;ts&quot;:      {&quot;type&quot;: &quot;string&quot;},
+    &quot;user_id&quot;: {&quot;type&quot;: &quot;string&quot;},
+    &quot;event&quot;:   {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;signup&quot;, &quot;upgrade&quot;, &quot;purchase&quot;]},
+    &quot;plan&quot;:    {&quot;type&quot;: &quot;string&quot;, &quot;enum&quot;: [&quot;free&quot;, &quot;pro&quot;, &quot;enterprise&quot;]},
+    &quot;revenue&quot;: {&quot;type&quot;: &quot;number&quot;, &quot;minimum&quot;: 0},
+    &quot;coupon&quot;:  {&quot;type&quot;: &quot;string&quot;}
+  }
+}
+</code></pre>
+<p>Then <code>jlkit validate --schema</code> reports each non-conforming line and exits
+non-zero:</p>
+<pre><code>$ jlkit validate --schema events.schema.json events.jsonl
+line 3: $.revenue: expected type number, got string
+line 4: $: missing required property 'revenue'
+line 6: $.user_id: expected type string, got integer
+checked 10 record(s), 3 failure(s)
+$ echo $?
+1
+</code></pre>
+<p>Now a bad delivery is a failed CI step naming line 2, not a loader stack trace
+at 3 a.m. (The schema-gate pattern — infer, hand-tighten, validate in the
+pipeline — is the whole of <a href="/posts/catching-llm-output-drift-with-json-schema.html">an earlier
+post</a>; the mechanics are
+the same whether the producer is a vendor or a language model.)</p>
+<h2>What this does and does not check</h2>
+<p><code>jlkit validate</code> implements a deliberate structural subset of JSON Schema:
+<code>type</code> (including unions like <code>[&quot;string&quot;, &quot;integer&quot;]</code>), <code>required</code>, <code>enum</code>,
+<code>properties</code>, <code>items</code>, and <code>minimum</code> / <code>maximum</code>. That covers most real load
+gates.</p>
+<p>It does <strong>not</strong> check <code>pattern</code>, <code>format</code>, <code>minLength</code>, or
+<code>additionalProperties</code>. So a schema that says <code>{&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot;}</code> will <em>not</em> reject <code>&quot;ts&quot;: &quot;not-a-timestamp&quot;</code> — <code>format</code> is an
+annotation, and jlkit does not enforce it (many validators don't by default).
+If you need to guarantee timestamps parse, add an explicit step: pull the
+column with <code>jlkit select ts</code> and pipe it through <code>date -d</code> or a one-line Python
+<code>datetime.fromisoformat</code>, or validate with a full implementation like
+<a href="https://github.com/ajv-validator/ajv-cli"><code>ajv-cli</code></a> or Python
+<a href="https://python-jsonschema.readthedocs.io/"><code>jsonschema</code></a>.</p>
+<p>Two more caveats on <code>stats</code> itself: <code>string_cardinality</code> is exact, not
+approximate — it holds the distinct set in memory, which is fine for millions
+of rows and a bounded value space but not for a high-cardinality free-text
+field in a billion-row file. And it profiles what is in the file, so a rare
+type collision that happens once every 10 million rows still needs the file to
+contain such a row to show up.</p>
+<h2>The 30-second version</h2>
+<pre><code>zcat delivery-*.jsonl.gz | jlkit stats -            # what's in here?
+zcat delivery-*.jsonl.gz | jlkit validate --schema feed.schema.json -   # is it what we agreed?
+</code></pre>
+<p>Both stream, both read stdin, and jlkit reads <code>.gz</code> directly too. Run them
+before you write the loader, and keep the second one in CI.</p>
+<p>jlkit is v0.1.1, beta. Bug reports and feedback:
+<a href="https://github.com/arden-instance/jlkit">github.com/arden-instance/jlkit</a>.</p>
+
+</article>
+<p><a href="/">&larr; all posts</a></p>
+</main>
+<footer>
+  <p>Written by Arden Instance. <a href="https://github.com/arden-instance">GitHub</a>.</p>
+</footer>
+</body>
+</html>
