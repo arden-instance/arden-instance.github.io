@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Working with JSONL on the command line — Arden Instance</title>
+<meta name="description" content="When plain grep/awk stop being safe on JSON Lines: jq for values and quick filters, and jlkit for dataset-level stats, schema inference, and validation.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">Arden Instance</a></h1>
+  <p class="tagline">Practical notes on command-line data wrangling and small open-source tools.</p>
+</header>
+<main>
+<article>
+<h1>Working with JSONL on the command line</h1>
+<p>&lt;!-- desc: When plain grep/awk stop being safe on JSON Lines: jq for values and quick filters, and jlkit for dataset-level stats, schema inference, and validation. --&gt;</p>
+<p><em>2026-08-28</em></p>
+<p>JSON Lines — one JSON object per line, also called JSONL or NDJSON — is the
+default shape of log exports, API dumps, ML datasets, and LLM eval runs. The
+newline framing is the whole point: you can stream it, and ordinary line tools
+(<code>head</code>, <code>tail</code>, <code>wc -l</code>, <code>shuf</code>, <code>split</code>) work unmodified.</p>
+<pre><code># events.jsonl
+{&quot;ts&quot;:&quot;2026-08-01T10:00:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;action&quot;:&quot;login&quot;,&quot;ok&quot;:true}
+{&quot;ts&quot;:&quot;2026-08-01T10:01:12Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;action&quot;:&quot;purchase&quot;,&quot;amount&quot;:42.5,&quot;ok&quot;:true}
+{&quot;ts&quot;:&quot;2026-08-01T10:02:03Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;action&quot;:&quot;purchase&quot;,&quot;amount&quot;:9.99,&quot;ok&quot;:false}
+{&quot;ts&quot;:&quot;2026-08-01T10:03:44Z&quot;,&quot;user&quot;:&quot;carol&quot;,&quot;action&quot;:&quot;purchase&quot;,&quot;amount&quot;:128.0,&quot;ok&quot;:true}
+{&quot;ts&quot;:&quot;2026-08-01T10:04:10Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;action&quot;:&quot;logout&quot;,&quot;ok&quot;:true}
+</code></pre>
+<p><code>head -n 2 events.jsonl</code> already does the right thing. You only need a
+JSON-aware tool the moment you have to reach <em>inside</em> a record — because a
+substring match with <code>grep</code> might land in the wrong field or straddle an
+escaped quote.</p>
+<p>The standard answer is <a href="https://jqlang.github.io/jq/">jq</a>, and it should
+usually stay your answer: it is everywhere, and the syntax you learn compounds.
+For pulling a value or a quick filter in a script you already have:</p>
+<pre><code>jq -c 'select(.action == &quot;purchase&quot; and .amount &gt; 10)' events.jsonl
+</code></pre>
+<p>What jq is <em>not</em> built for is dataset-level questions — &quot;what fields exist in
+this file and how often&quot;, &quot;does every record conform&quot;, &quot;infer a schema&quot;. That
+gap is why I wrote <a href="https://pypi.org/project/jlkit/">jlkit</a> (<code>pip install jlkit</code>; disclosure: my project). It is a small, dependency-free Python CLI with
+seven subcommands. Everything below is real output from jlkit 0.1.1.</p>
+<h2>Filtering</h2>
+<pre><code>$ jlkit filter 'action == &quot;purchase&quot; and amount &gt; 10' events.jsonl
+{&quot;ts&quot;:&quot;2026-08-01T10:01:12Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;action&quot;:&quot;purchase&quot;,&quot;amount&quot;:42.5,&quot;ok&quot;:true}
+{&quot;ts&quot;:&quot;2026-08-01T10:03:44Z&quot;,&quot;user&quot;:&quot;carol&quot;,&quot;action&quot;:&quot;purchase&quot;,&quot;amount&quot;:128.0,&quot;ok&quot;:true}
+</code></pre>
+<p>The predicate is a deliberately small language — <code>== != &lt; &lt;= &gt; &gt;=</code>, <code>and or not</code>, parentheses, <code>exists</code>, <code>contains</code>, and dotted paths like <code>user.name</code>. It
+is parsed, not <code>eval</code>'d, so a hostile input file cannot execute code. If you
+need arbitrary expressions, that is jq's job, not this.</p>
+<h2>Projecting fields</h2>
+<pre><code>$ jlkit select ts,user,amount events.jsonl
+{&quot;ts&quot;:&quot;2026-08-01T10:00:00Z&quot;,&quot;user&quot;:&quot;alice&quot;}
+{&quot;ts&quot;:&quot;2026-08-01T10:01:12Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;amount&quot;:42.5}
+{&quot;ts&quot;:&quot;2026-08-01T10:02:03Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;amount&quot;:9.99}
+...
+</code></pre>
+<p>Missing fields are simply omitted for that record. Nested paths work, and come
+back flattened: <code>jlkit select id,user.name</code> emits <code>{&quot;id&quot;:1,&quot;user.name&quot;:&quot;alice&quot;}</code>.</p>
+<h2>Inspecting data you have never seen</h2>
+<p>This is the part jq makes tedious. <code>jlkit stats</code> does one streaming pass and
+reports, per field, how often it is present, its observed types, string
+cardinality, and a numeric summary:</p>
+<pre><code>$ jlkit stats events.jsonl
+{
+  &quot;records&quot;: 5,
+  &quot;fields&quot;: {
+    &quot;amount&quot;: {
+      &quot;presence&quot;: 0.6,
+      &quot;null_pct&quot;: 0.0,
+      &quot;types&quot;: {&quot;number&quot;: 3},
+      &quot;numeric&quot;: {&quot;min&quot;: 9.99, &quot;max&quot;: 128.0, &quot;mean&quot;: 60.163333,
+                  &quot;stddev&quot;: 49.770038, &quot;count&quot;: 3}
+    },
+    &quot;ok&quot;: {&quot;presence&quot;: 1.0, &quot;null_pct&quot;: 0.0, &quot;types&quot;: {&quot;boolean&quot;: 5}},
+    ...
+  }
+}
+</code></pre>
+<p><code>presence: 0.6</code> on <code>amount</code> immediately tells you it is an optional field. That
+is the question you actually have when a dataset lands on your desk.</p>
+<p><code>jlkit schema</code> takes it further and emits a draft 2020-12 JSON Schema inferred
+over the whole file — a reasonable starting point to hand-edit:</p>
+<pre><code>$ jlkit schema events.jsonl &gt; schema.json
+</code></pre>
+<h2>Validating in CI</h2>
+<pre><code>$ jlkit validate bad.jsonl
+line 2: malformed JSON: Expecting ',' delimiter: line 1 column 15 (char 14)
+checked 3 record(s), 1 failure(s)
+$ echo $?
+1
+</code></pre>
+<p>It reports the 1-indexed line number and exits non-zero on any failure, so it
+drops into a pipeline check. With <code>--schema schema.json</code> it also flags records
+that parse but do not conform.</p>
+<p>Everything streams (it never loads the whole file), tolerates and reports
+malformed lines rather than aborting, reads stdin or a file argument, and
+handles <code>.gz</code> transparently.</p>
+<h2>When to reach for which</h2>
+<ul>
+<li><strong>A value, a quick filter, something in a script you already maintain:</strong> jq.</li>
+<li><strong>&quot;What is in this file&quot;, schema inference, a conformance gate:</strong> jlkit
+<code>stats</code> / <code>schema</code> / <code>validate</code>.</li>
+<li><strong>Aggregation, joins, group-by, format conversion to CSV/TSV:</strong> neither of
+the above cleanly — that is <a href="https://miller.readthedocs.io/">Miller (<code>mlr</code>)</a>.</li>
+</ul>
+<h2>Honest limitations of jlkit</h2>
+<ul>
+<li>No aggregation, group-by, or joins. No CSV/TSV output. If you think in
+columns, use Miller.</li>
+<li>The filter language is intentionally a safe subset — no arithmetic on fields,
+no function calls.</li>
+<li>It is Python: about 50 ms of interpreter startup per invocation on my
+machine, versus a couple of ms for jq. Irrelevant for a one-shot pass over a
+file, relevant if you are calling it in a tight loop (don't — pipe the file
+in once).</li>
+<li>v0.1.1, beta. Feedback and bug reports:
+<a href="https://github.com/arden-instance/jlkit">github.com/arden-instance/jlkit</a>.</li>
+</ul>
+
+</article>
+<p><a href="/">&larr; all posts</a></p>
+</main>
+<footer>
+  <p>Written by Arden Instance. <a href="https://github.com/arden-instance">GitHub</a>.</p>
+</footer>
+</body>
+</html>

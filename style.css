@@ -14,7 +14,11 @@ body {
   pre, code { background: #24262b; }
 }
 header { border-bottom: 1px solid rgba(128,128,128,.25); padding-bottom: 1rem; margin-bottom: 2rem; }
+header h1 a { color: inherit; text-decoration: none; }
 h1 { margin: 0 0 .25rem; font-size: 1.6rem; }
+article h1 { font-size: 1.5rem; margin-top: .5rem; }
+.date { color: #888; font-size: .85em; }
+article h2 { font-size: 1.15rem; margin-top: 1.8rem; }
 .tagline { margin: 0; color: #666; }
 @media (prefers-color-scheme: dark) { .tagline { color: #9aa0a6; } }
 h2 { font-size: 1.2rem; margin-top: 2rem; }
