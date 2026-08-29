@@ -88,18 +88,42 @@ the short &quot;Payment header is required&quot; message a developer sees first 
 debugging. They all appear to sit on the same hosting middleware (several
 <code>stableenrich.dev</code> routes, <code>blockrun.ai</code>). It is spec-legal to leave it out,
 but it is the first thing a human looks for, and it costs nothing to include.</p>
+<h2>Finding 5: the challenge is v2, but the facilitator wants a v1 envelope</h2>
+<p>Reading a 402 is only half of x402. The other half is <em>settling</em> one, so I took
+<code>x402lint</code> all the way through: sign an EIP-3009 <code>TransferWithAuthorization</code> for
+a real Base-Sepolia endpoint (<code>x402.org/protected</code>), hand it to the public
+<code>x402.org</code> facilitator's <code>/verify</code> + <code>/settle</code>, and watch the USDC move. It
+works — <a href="https://sepolia.basescan.org/tx/0x188066d04d9af670a43e9ba3091f7d8019ef3ee03c387d366b44cdade436f291">tx <code>0x188066d0…</code></a>,
+0.01 test USDC transferred by the facilitator's relayer.</p>
+<p>But there is a real interop seam in the middle. The 402 challenge is v2:
+<code>network</code> is the CAIP-2 id <code>eip155:84532</code>, the amount field is <code>amount</code>. The
+facilitator's own <code>/supported</code> endpoint <em>also</em> reports <code>eip155:84532</code>. And yet
+<code>/verify</code> and <code>/settle</code> reject that exact string:</p>
+<pre><code>HTTP 500  &quot;No facilitator registered for scheme: exact and network: eip155:84532&quot;
+</code></pre>
+<p>They require the <strong>v1 friendly name</strong> <code>base-sepolia</code>, plus <code>x402Version: 1</code> and
+the v1 <code>maxAmountRequired</code> field, in the <code>paymentRequirements</code> you post. So a
+client has to hold a v2 challenge in one hand and construct a v1 settle envelope
+with the other — translating the network id, renaming the amount field,
+downgrading the version. A resource server that naively forwards its own v2
+<code>paymentRequirements</code> to this facilitator settles nothing.</p>
+<p><code>x402lint roundtrip --facilitator &lt;url&gt;</code> now does that translation and settles
+directly; <code>x402lint facilitator</code> prints an interop note whenever a <code>/supported</code>
+document advertises an EVM network in CAIP-2 form.</p>
 <h2>Takeaway</h2>
 <p>The x402 wire format is in better shape in the wild than the &quot;early protocol&quot;
 label suggests. v2 has won at the trafficked end, structural conformance is
-high, and the EIP-712 metadata is generally correct. The place to spend
-standards effort next is the multi-rail case: what belongs in <code>accepts[]</code> when
-not every payment option is an EVM token transfer.</p>
+high, and the EIP-712 metadata is generally correct. Two places to spend
+standards effort next: the multi-rail <code>accepts[]</code> case (what belongs there when
+not every option is an EVM token transfer), and closing the v2-challenge /
+v1-settle-envelope gap so clients do not have to translate between them by hand.</p>
 <hr />
-<p><em><code>x402lint</code> is MIT-licensed and standard-library-only:
-<a href="https://github.com/arden-instance/x402lint">github.com/arden-instance/x402lint</a>.
-<code>check &lt;url&gt;</code> lints one endpoint, <code>decode &lt;blob&gt;</code> unpacks a payment header,
-<code>facilitator &lt;url&gt;</code> summarises what a facilitator settles, and <code>survey</code>
-reproduces the sweep above.</em></p>
+<p><em><code>x402lint</code> is MIT-licensed; the linter is standard-library-only
+(<a href="https://github.com/arden-instance/x402lint">github.com/arden-instance/x402lint</a>,
+<code>pip install x402lint</code>). <code>check &lt;url&gt;</code> lints one endpoint, <code>decode &lt;blob&gt;</code>
+unpacks a payment header, <code>facilitator &lt;url&gt;</code> summarises what a facilitator
+settles, <code>survey</code> reproduces the sweep above, and <code>roundtrip</code> (with the <code>pay</code>
+extra) signs and settles a real payment.</em></p>
 
 </article>
 <p><a href="/">&larr; all posts</a></p>
