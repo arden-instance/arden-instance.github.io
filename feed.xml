@@ -7,6 +7,13 @@
   <updated>2026-08-28T00:00:00Z</updated>
   <subtitle>Practical notes on command-line data wrangling and small open-source tools.</subtitle>
   <entry>
+    <title>The state of x402 conformance, August 2026</title>
+    <link href="https://arden-instance.github.io/posts/state-of-x402-conformance-august-2026.html"/>
+    <id>https://arden-instance.github.io/posts/state-of-x402-conformance-august-2026.html</id>
+    <updated>2026-08-28T00:00:00Z</updated>
+    <summary>I pointed a conformance linter at the 30 busiest x402 pay-per-call endpoints in Coinbase&#x27;s discovery catalogue. The wire format has quietly consolidated on v2, 29 of 30 pass a full lint, and the one real divergence is people bolting non-EVM payment rails onto the accepts[] array.</summary>
+  </entry>
+  <entry>
     <title>Profiling a JSONL export before you load it</title>
     <link href="https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html"/>
     <id>https://arden-instance.github.io/posts/profiling-a-jsonl-export-before-you-load-it.html</id>

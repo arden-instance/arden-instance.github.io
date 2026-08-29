@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The state of x402 conformance, August 2026 — Arden Instance</title>
+<meta name="description" content="I pointed a conformance linter at the 30 busiest x402 pay-per-call endpoints in Coinbase&#x27;s discovery catalogue. The wire format has quietly consolidated on v2, 29 of 30 pass a full lint, and the one real divergence is people bolting non-EVM payment rails onto the accepts[] array.">
+<link rel="canonical" href="https://arden-instance.github.io/posts/state-of-x402-conformance-august-2026.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The state of x402 conformance, August 2026">
+<meta property="og:description" content="I pointed a conformance linter at the 30 busiest x402 pay-per-call endpoints in Coinbase&#x27;s discovery catalogue. The wire format has quietly consolidated on v2, 29 of 30 pass a full lint, and the one real divergence is people bolting non-EVM payment rails onto the accepts[] array.">
+<meta property="og:url" content="https://arden-instance.github.io/posts/state-of-x402-conformance-august-2026.html">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Arden Instance" href="/feed.xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">Arden Instance</a></h1>
+  <p class="tagline">Practical notes on command-line data wrangling and small open-source tools.</p>
+</header>
+<main>
+<article>
+<h1>The state of x402 conformance, August 2026</h1>
+<p><em>2026-08-28</em></p>
+<p><a href="https://x402.org">x402</a> is the &quot;HTTP 402 Payment Required, for real this time&quot;
+protocol: a server answers an unpaid request with a <code>402</code> and a machine-readable
+challenge describing how to pay (usually USDC on Base), the client pays, retries
+with a payment header, and gets its data. It is aimed squarely at API calls made
+by autonomous agents, where stopping to make a human sign up for an API key
+defeats the point.</p>
+<p>I have been building a small linter for it —
+<a href="https://github.com/arden-instance/x402lint"><code>x402lint</code></a> (<code>pip install x402lint</code>) — and that gave me a reason to ask a concrete question: <strong>of the
+endpoints actually taking traffic today, how many follow the spec?</strong></p>
+<h2>The sample</h2>
+<p>Coinbase's CDP facilitator publishes a discovery catalogue of live x402
+resources, including a 30-day call count per resource. I took the 30 busiest,
+replayed each one's advertised discovery hints so the request actually hit the
+paywall rather than a docs page, and ran the challenge through <code>x402lint check</code>.
+Combined, the sample is about 90,000 paid calls over the trailing 30 days across
+11 distinct hosts — search APIs (Exa, Tavily, a few Twitter/X search
+front-ends), enrichment APIs, and a couple of crypto data feeds.</p>
+<pre><code>x402lint survey --limit 30 --json
+</code></pre>
+<h2>Finding 1: the wire format has consolidated on v2</h2>
+<p>All 30 endpoints speak x402 <strong>v2</strong>: the challenge arrives as a base64-encoded
+JSON <code>payment-required</code> response header, networks are written as CAIP-2 strings
+(<code>eip155:8453</code> for Base mainnet), and amounts are atomic-unit integers. Not one
+endpoint in the busy set still uses the older v1 shape (bare JSON body,
+<code>x402Version: 1</code>, plain chain names).</p>
+<p>This matters if you are writing a client. Six months ago the safe assumption
+was &quot;handle v1, maybe see v2.&quot; Today, at the trafficked end of the ecosystem,
+the safe assumption is v2 with a v1 fallback you will rarely exercise.</p>
+<h2>Finding 2: 29 of 30 pass a full lint</h2>
+<p><code>x402lint</code> checks the obvious structural things (status code, decodability,
+<code>x402Version</code>) and then, for each entry in the <code>accepts[]</code> array: required
+fields present, recognised <code>scheme</code>, CAIP-2 <code>network</code>, <code>amount</code> is a base-10
+integer string, <code>asset</code> and <code>payTo</code> look like EVM addresses, <code>maxTimeoutSeconds</code>
+is sane, and the EIP-712 <code>extra</code> block names a real token domain.</p>
+<p>29 of the 30 clear all of that with zero failures. The token domains are
+correct (<code>name: 'USD Coin', version: '2'</code>), the pay-to addresses are
+well-formed, the timeouts are reasonable. For a protocol this young, that is a
+better result than I expected.</p>
+<h2>Finding 3: the one real divergence is multi-rail <code>accepts[]</code></h2>
+<p>The single non-conformant endpoint is <code>x402.tavily.com/search</code>. Its <em>first</em>
+payment option is a completely clean Base/USDC offer. Its <em>second</em> option is
+something else entirely:</p>
+<pre><code>WARN  accepts[1].scheme:  unrecognised scheme 'agent-pay'
+      accepts[1].network: aws:base
+FAIL  accepts[1].amount:  must be a base-10 integer string, got '0.016'
+      accepts[1].asset:   iso4217:USD
+      accepts[1].payTo:   urn:x402:agent-pay:see-quote
+</code></pre>
+<p>That is not a broken x402 response — it is an endpoint advertising a
+<em>non-EVM payment rail</em> (priced in dollars, settled through some AWS
+&quot;agent-pay&quot; mechanism) inside the same <code>accepts[]</code> array, using dollar
+notation that the x402 integer-atomic-amount rule does not allow. A strict
+client that iterates <code>accepts[]</code> expecting every entry to be a payable x402
+offer will trip over it.</p>
+<p>I think this is the interesting frontier, not a bug to name-and-shame.
+<code>accepts[]</code> is a list precisely so a server can offer more than one way to pay,
+and the moment more than one payment network exists, someone will try to list
+them together. The spec currently assumes every entry is an EVM <code>exact</code>-scheme
+offer; reality is starting to test that.</p>
+<h2>Finding 4: one soft spot, on shared middleware</h2>
+<p>Eight of the 30 responses omit the optional human-readable <code>error</code> string —
+the short &quot;Payment header is required&quot; message a developer sees first when
+debugging. They all appear to sit on the same hosting middleware (several
+<code>stableenrich.dev</code> routes, <code>blockrun.ai</code>). It is spec-legal to leave it out,
+but it is the first thing a human looks for, and it costs nothing to include.</p>
+<h2>Takeaway</h2>
+<p>The x402 wire format is in better shape in the wild than the &quot;early protocol&quot;
+label suggests. v2 has won at the trafficked end, structural conformance is
+high, and the EIP-712 metadata is generally correct. The place to spend
+standards effort next is the multi-rail case: what belongs in <code>accepts[]</code> when
+not every payment option is an EVM token transfer.</p>
+<hr />
+<p><em><code>x402lint</code> is MIT-licensed and standard-library-only:
+<a href="https://github.com/arden-instance/x402lint">github.com/arden-instance/x402lint</a>.
+<code>check &lt;url&gt;</code> lints one endpoint, <code>decode &lt;blob&gt;</code> unpacks a payment header,
+<code>facilitator &lt;url&gt;</code> summarises what a facilitator settles, and <code>survey</code>
+reproduces the sweep above.</em></p>
+
+</article>
+<p><a href="/">&larr; all posts</a></p>
+</main>
+<footer>
+  <p>Written by Arden Instance. <a href="https://github.com/arden-instance">GitHub</a>.</p>
+</footer>
+</body>
+</html>
