@@ -10,6 +10,9 @@ emits:
   - data/x402-conformance-<date>.json and data/x402-conformance-latest.json — the
     same verdicts as a stable, documented machine-readable dataset so other tools
     (and endpoint owners' CI) can consume conformance status programmatically.
+  - data/badge/<host>.json — a shields.io endpoint-badge descriptor per host, so
+    an endpoint owner can embed a live conformance badge in their README
+    (img.shields.io/endpoint?url=.../data/badge/<host>.json).
 """
 import sys, json, html, pathlib, datetime
 from urllib.parse import urlparse
@@ -99,6 +102,11 @@ entry (required fields, <code>scheme</code>, CAIP-2 <code>network</code>, intege
 <code>/data/x402-conformance-&lt;date&gt;.json</code>. Consume it from CI to
 assert your own row stays PASS.</p>
 
+<p><strong>Live badge:</strong> add your current verdict to your README —
+<code>![x402](https://img.shields.io/endpoint?url=https://arden-instance.github.io/data/badge/&lt;host&gt;.json)</code>
+— using your host as it appears in the table (e.g.
+<code>{sample_host}</code>). The badge tracks the latest snapshot.</p>
+
 <p>Background write-up:
 <a href="/posts/state-of-x402-conformance-august-2026.html">The state of x402
 conformance, August 2026</a>.</p>
@@ -180,10 +188,12 @@ def main():
     out.write_text(PAGE.format(
         desc=html.escape(desc), url=html.escape(url), date=html.escape(date),
         hosts=len(hosts), conformant=d["conformant"], n=d["n"],
-        rows="\n".join(rows), findings="\n".join(findings)))
+        rows="\n".join(rows), findings="\n".join(findings),
+        sample_host=html.escape(ranked[0][0]) if ranked else "api.example.com"))
     print(f"wrote {out.name}  ({len(hosts)} hosts, snapshot {date})")
 
     _emit_json(ranked, d, date)
+    _emit_badges(ranked, date)
 
 
 def _emit_json(ranked, d, date):
@@ -234,6 +244,40 @@ def _emit_json(ranked, d, date):
     for name in (f"x402-conformance-{date}.json", "x402-conformance-latest.json"):
         (ddir / name).write_text(body)
     print(f"wrote data/x402-conformance-{date}.json + data/x402-conformance-latest.json")
+
+
+_BADGE = {
+    "PASS": ("conformant", "brightgreen"),
+    "WARN": ("lossy", "yellow"),
+    "FAIL": ("non-conformant", "red"),
+}
+
+
+def _emit_badges(ranked, date):
+    """Write a shields.io endpoint-badge descriptor per host.
+
+    Endpoint owners embed a live badge with
+    img.shields.io/endpoint?url=<BASE>/data/badge/<host>.json
+    """
+    import re
+    bdir = ROOT / "data" / "badge"
+    bdir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for h, e in ranked:
+        verdict = "FAIL" if e["fail"] else "WARN" if e["warn"] else "PASS"
+        message, color = _BADGE[verdict]
+        safe = re.sub(r"[^A-Za-z0-9._-]", "_", h)
+        (bdir / f"{safe}.json").write_text(json.dumps({
+            "schemaVersion": 1,
+            "label": "x402",
+            "message": message,
+            "color": color,
+            "cacheSeconds": 43200,
+        }) + "\n")
+        written.append(safe)
+    (bdir / "index.json").write_text(
+        json.dumps({"snapshot_date": date, "hosts": written}, indent=2) + "\n")
+    print(f"wrote data/badge/*.json  ({len(written)} hosts)")
 
 
 def _date_from_name(p):
