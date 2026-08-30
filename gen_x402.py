@@ -4,8 +4,12 @@
 Usage: .venv/bin/python gen_x402.py <survey-snapshot.json> [<date>]
 
 Reads an `x402lint survey --json` snapshot (top-N CDP discovery resources) and
-emits a standalone page: one row per distinct host, ranked by 30-day call volume,
-with a stable #host anchor so an operator can link straight to their row.
+emits:
+  - x402-conformance.html — a standalone page: one row per distinct host, ranked
+    by 30-day call volume, with a stable #host anchor for deep-linking.
+  - data/x402-conformance-<date>.json and data/x402-conformance-latest.json — the
+    same verdicts as a stable, documented machine-readable dataset so other tools
+    (and endpoint owners' CI) can consume conformance status programmatically.
 """
 import sys, json, html, pathlib, datetime
 from urllib.parse import urlparse
@@ -88,6 +92,12 @@ entry (required fields, <code>scheme</code>, CAIP-2 <code>network</code>, intege
 <code>amount</code>, <code>asset</code>/<code>payTo</code> addresses, EIP-712
 <code>extra</code>). Full rule list and snapshot history:
 <a href="https://github.com/arden-instance/x402lint/blob/main/SURVEY.md">SURVEY.md</a>.</p>
+
+<p><strong>Raw data:</strong> the same verdicts as a documented JSON dataset —
+<a href="/data/x402-conformance-latest.json"><code>/data/x402-conformance-latest.json</code></a>
+(stable URL, updated each snapshot) and dated snapshots at
+<code>/data/x402-conformance-&lt;date&gt;.json</code>. Consume it from CI to
+assert your own row stays PASS.</p>
 
 <p>Background write-up:
 <a href="/posts/state-of-x402-conformance-august-2026.html">The state of x402
@@ -172,6 +182,58 @@ def main():
         hosts=len(hosts), conformant=d["conformant"], n=d["n"],
         rows="\n".join(rows), findings="\n".join(findings)))
     print(f"wrote {out.name}  ({len(hosts)} hosts, snapshot {date})")
+
+    _emit_json(ranked, d, date)
+
+
+def _emit_json(ranked, d, date):
+    """Write the same verdicts as a stable, documented machine-readable dataset."""
+    hosts = []
+    for i, (h, e) in enumerate(ranked, 1):
+        verdict = "FAIL" if e["fail"] else "WARN" if e["warn"] else "PASS"
+        findings = [{"level": "FAIL", "detail": f} for f in dict.fromkeys(e["fails"])]
+        if e["warn"]:
+            findings.append({
+                "level": "WARN",
+                "endpoints": e["warn"],
+                "detail": "challenge omits the optional top-level 'error' string "
+                          "(spec-legal but lossy on a failed payment)",
+            })
+        hosts.append({
+            "rank": i,
+            "host": h,
+            "calls_30d": e["calls"],
+            "endpoints": e["n"],
+            "wire_version": sorted(e["wire"]),
+            "verdict": verdict,
+            "warn_endpoints": e["warn"],
+            "fail_endpoints": e["fail"],
+            "findings": findings,
+        })
+    doc = {
+        "snapshot_date": date,
+        "spec": "x402 v2 wire spec (x402.org)",
+        "generator": f"x402lint survey --limit {d['n']} --json",
+        "source_population": "Coinbase CDP discovery catalogue, ranked by reported "
+                             "30-day call volume; top N resources",
+        "endpoints_total": d["n"],
+        "endpoints_conformant": d["conformant"],
+        "hosts_total": len(hosts),
+        "verdict_legend": {
+            "PASS": "an agent runtime can parse and pay every advertised option "
+                    "with no special-casing",
+            "WARN": "spec-legal but lossy",
+            "FAIL": "a conforming client cannot safely pay at least one option",
+        },
+        "canonical_url": f"{BASE}/x402-conformance.html",
+        "hosts": hosts,
+    }
+    ddir = ROOT / "data"
+    ddir.mkdir(exist_ok=True)
+    body = json.dumps(doc, indent=2) + "\n"
+    for name in (f"x402-conformance-{date}.json", "x402-conformance-latest.json"):
+        (ddir / name).write_text(body)
+    print(f"wrote data/x402-conformance-{date}.json + data/x402-conformance-latest.json")
 
 
 def _date_from_name(p):

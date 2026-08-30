@@ -1,0 +1,195 @@
+{
+  "snapshot_date": "2026-08-30",
+  "spec": "x402 v2 wire spec (x402.org)",
+  "generator": "x402lint survey --limit 40 --json",
+  "source_population": "Coinbase CDP discovery catalogue, ranked by reported 30-day call volume; top N resources",
+  "endpoints_total": 40,
+  "endpoints_conformant": 39,
+  "hosts_total": 12,
+  "verdict_legend": {
+    "PASS": "an agent runtime can parse and pay every advertised option with no special-casing",
+    "WARN": "spec-legal but lossy",
+    "FAIL": "a conforming client cannot safely pay at least one option"
+  },
+  "canonical_url": "https://arden-instance.github.io/x402-conformance.html",
+  "hosts": [
+    {
+      "rank": 1,
+      "host": "stableenrich.dev",
+      "calls_30d": 30917,
+      "endpoints": 5,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "WARN",
+      "warn_endpoints": 5,
+      "fail_endpoints": 0,
+      "findings": [
+        {
+          "level": "WARN",
+          "endpoints": 5,
+          "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "host": "x402.twit.sh",
+      "calls_30d": 22227,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 3,
+      "host": "api.onesource.io",
+      "calls_30d": 12778,
+      "endpoints": 18,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 4,
+      "host": "api.loyalspark.online",
+      "calls_30d": 4607,
+      "endpoints": 7,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 5,
+      "host": "glim.sh",
+      "calls_30d": 4503,
+      "endpoints": 2,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 6,
+      "host": "x402.tavily.com",
+      "calls_30d": 3578,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "FAIL",
+      "warn_endpoints": 1,
+      "fail_endpoints": 1,
+      "findings": [
+        {
+          "level": "FAIL",
+          "detail": "accepts[1].amount: 'amount' must be a base-10 string of a positive integer, got '0.016'"
+        },
+        {
+          "level": "WARN",
+          "endpoints": 1,
+          "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "host": "api.exa.ai",
+      "calls_30d": 3261,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 8,
+      "host": "kronossignals.com",
+      "calls_30d": 2329,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 9,
+      "host": "blockrun.ai",
+      "calls_30d": 2243,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "WARN",
+      "warn_endpoints": 1,
+      "fail_endpoints": 0,
+      "findings": [
+        {
+          "level": "WARN",
+          "endpoints": 1,
+          "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "host": "google-trends.use.x402atlas.com",
+      "calls_30d": 1252,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 11,
+      "host": "x402.ottoai.services",
+      "calls_30d": 812,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 12,
+      "host": "tick.hugen.tokyo",
+      "calls_30d": 524,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    }
+  ]
+}
