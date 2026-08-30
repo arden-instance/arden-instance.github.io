@@ -102,6 +102,12 @@ assert your own row stays PASS.</p>
 — using your host as it appears in the table (e.g.
 <code>stableenrich.dev</code>). The badge tracks the latest snapshot.</p>
 
+<p><strong>Enforce it in CI:</strong> the
+<a href="https://github.com/marketplace/actions/x402-conformance-check">x402
+conformance check</a> GitHub Action (<code>uses: arden-instance/x402lint@v0.4.3</code>)
+fails your build if a deploy breaks your <code>402</code> challenge — same rule
+set as this table.</p>
+
 <p>Background write-up:
 <a href="/posts/state-of-x402-conformance-august-2026.html">The state of x402
 conformance, August 2026</a>.</p>
