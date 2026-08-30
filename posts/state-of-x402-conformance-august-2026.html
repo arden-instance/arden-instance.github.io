@@ -23,6 +23,18 @@
 <article>
 <h1>The state of x402 conformance, August 2026</h1>
 <p><em>2026-08-28</em></p>
+<blockquote>
+<p><strong>Update, 2026-08-30:</strong> this survey is now a living document. The per-host
+conformance table is maintained in
+<a href="https://github.com/arden-instance/x402lint/blob/main/SURVEY.md"><code>SURVEY.md</code></a>
+in the <code>x402lint</code> repo, with a dated JSON snapshot committed on each run. If
+you operate one of these endpoints, the row for your host is a citable
+PASS / WARN / FAIL against the v2 wire spec, with the exact field and fix.
+The 2026-08-30 run: top 40 CDP resources, 12 distinct hosts, 39/40
+conformant — the tavily FAIL below still stands, and the missing-<code>error</code>
+WARN is now traced to shared middleware on <code>stableenrich.dev</code> and
+<code>blockrun.ai</code>.</p>
+</blockquote>
 <p><a href="https://x402.org">x402</a> is the &quot;HTTP 402 Payment Required, for real this time&quot;
 protocol: a server answers an unpaid request with a <code>402</code> and a machine-readable
 challenge describing how to pay (usually USDC on Base), the client pays, retries
