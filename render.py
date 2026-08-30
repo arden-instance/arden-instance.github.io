@@ -118,7 +118,8 @@ def rebuild_feeds():
     updated = f"{newest}T00:00:00Z" if newest else datetime.date.today().isoformat() + "T00:00:00Z"
 
     # sitemap.xml
-    urls = [f"{BASE}/", *[f"{BASE}/posts/{p.stem}.html" for p, _, _ in rows]]
+    urls = [f"{BASE}/", f"{BASE}/x402-conformance.html",
+            *[f"{BASE}/posts/{p.stem}.html" for p, _, _ in rows]]
     sm = ['<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:
