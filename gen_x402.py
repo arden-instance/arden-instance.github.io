@@ -68,7 +68,7 @@ least one advertised option.</p>
 
 <p><strong>Operators:</strong> link straight to your row with
 <code>{url}#&lt;host&gt;</code>. Verdicts and fixes come from a reproducible
-command (<code>pipx run x402lint survey --limit {n} --json</code>); if you have
+command (<code>pipx run x402lint survey --per-host --limit {n} --json</code>); if you have
 fixed an issue, re-run it or open an issue on the repo and the next snapshot will
 reflect it.</p>
 
@@ -82,10 +82,18 @@ reflect it.</p>
 <h2>Findings</h2>
 {findings}
 
+<p class="date"><em>Note on the <code>/v1/chat/completions</code> proxies that
+return <code>400</code> instead of <code>402</code>: these validate the request
+body before issuing a payment challenge. The x402 flow expects the
+<code>402</code> to come first, so this is a real deviation, but it is lower
+confidence than the malformed-<code>amount</code> FAILs &mdash; a caller that
+sends a complete request body may reach the paywall.</em></p>
+
 <h2>Method</h2>
 <p><strong>Population:</strong> the Coinbase CDP discovery catalogue
 (<code>api.cdp.coinbase.com/platform/v2/x402/discovery/resources</code>), ranked
-by reported 30-day call volume; top {n} resources.
+by reported 30-day call volume; top {n} resources, deduplicated to one row per
+host (its busiest advertised path).
 <strong>Request:</strong> each resource is fetched with no payment header,
 replaying its own advertised <code>bazaar</code> input method and example
 parameters so the request reaches the paywall.
@@ -140,7 +148,7 @@ def main():
         e["n"] += 1
         e["warn"] += r["counts"]["WARN"]
         e["fail"] += r["counts"]["FAIL"]
-        e["wire"].add(r.get("wire_version", "?"))
+        e["wire"].add(r.get("wire_version") or "?")
         e["fails"] += r.get("fails", [])
 
     ranked = sorted(hosts.items(), key=lambda kv: kv[1]["calls"], reverse=True)
@@ -229,7 +237,7 @@ def _emit_json(ranked, d, date):
     doc = {
         "snapshot_date": date,
         "spec": "x402 v2 wire spec (x402.org)",
-        "generator": f"x402lint survey --limit {d['n']} --json",
+        "generator": f"x402lint survey --per-host --limit {d['n']} --json",
         "source_population": "Coinbase CDP discovery catalogue, ranked by reported "
                              "30-day call volume; top N resources",
         "endpoints_total": d["n"],
