@@ -90,12 +90,17 @@ runs the same field-by-field conformance engine against a live
 <h2>Findings</h2>
 {findings}
 
-<p class="date"><em>Note on the <code>/v1/chat/completions</code> proxies that
-return <code>400</code> instead of <code>402</code>: these validate the request
-body before issuing a payment challenge. The x402 flow expects the
-<code>402</code> to come first, so this is a real deviation, but it is lower
-confidence than the malformed-<code>amount</code> FAILs &mdash; a caller that
-sends a complete request body may reach the paywall.</em></p>
+<p class="date"><em>Note on the LLM / action proxies (Telnyx, Surplus
+Intelligence, grov, DeepAI, agentdata): earlier snapshots FAILed these for
+returning <code>400</code> to a bare probe. They are in fact conformant &mdash;
+each returns a well-formed <code>402</code> challenge once the POST body passes
+its own schema validation (a missing <code>model</code>/<code>query</code>/
+<code>handle</code> field is rejected with <code>400</code> first). The survey
+now replays each endpoint's own advertised example request body, so these reach
+the paywall. The only wrinkle for callers: an unpaid client that does not
+already know the request schema sees the <code>400</code> before it can discover
+the price &mdash; the <code>bazaar</code> discovery record carries the example
+body for exactly this reason.</em></p>
 
 <h2>Method</h2>
 <p><strong>Population:</strong> the Coinbase CDP discovery catalogue
@@ -103,8 +108,9 @@ sends a complete request body may reach the paywall.</em></p>
 by reported 30-day call volume; top {n} resources, deduplicated to one row per
 host (its busiest advertised path).
 <strong>Request:</strong> each resource is fetched with no payment header,
-replaying its own advertised <code>bazaar</code> input method and example
-parameters so the request reaches the paywall.
+replaying its own advertised <code>bazaar</code> input method, example query
+parameters and example request body so the request reaches the paywall rather
+than a request-validation <code>400</code>.
 <strong>Check:</strong> status code, wire format, document decode,
 <code>x402Version</code>, <code>error</code>, and every <code>accepts[]</code>
 entry (required fields, <code>scheme</code>, CAIP-2 <code>network</code>, integer

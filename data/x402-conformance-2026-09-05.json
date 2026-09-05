@@ -4,7 +4,7 @@
   "generator": "x402lint survey --per-host --limit 150 --json",
   "source_population": "Coinbase CDP discovery catalogue, ranked by reported 30-day call volume; top N resources",
   "endpoints_total": 150,
-  "endpoints_conformant": 144,
+  "endpoints_conformant": 149,
   "hosts_total": 150,
   "verdict_legend": {
     "PASS": "an agent runtime can parse and pay every advertised option with no special-casing",
@@ -590,21 +590,12 @@
       "calls_30d": 314,
       "endpoints": 1,
       "wire_version": [
-        "?"
+        "2"
       ],
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "warn_endpoints": 0,
-      "fail_endpoints": 2,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "status: expected HTTP 402, got 400"
-        },
-        {
-          "level": "FAIL",
-          "detail": "format: no x402 payment challenge detected (no payment-required header, no x402Version in body)"
-        }
-      ]
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 41,
@@ -670,21 +661,12 @@
       "calls_30d": 278,
       "endpoints": 1,
       "wire_version": [
-        "?"
+        "2"
       ],
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "warn_endpoints": 0,
-      "fail_endpoints": 2,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "status: expected HTTP 402, got 400"
-        },
-        {
-          "level": "FAIL",
-          "detail": "format: no x402 payment challenge detected (no payment-required header, no x402Version in body)"
-        }
-      ]
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 46,
@@ -1073,21 +1055,12 @@
       "calls_30d": 158,
       "endpoints": 1,
       "wire_version": [
-        "?"
+        "2"
       ],
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "warn_endpoints": 0,
-      "fail_endpoints": 2,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "status: expected HTTP 402, got 400"
-        },
-        {
-          "level": "FAIL",
-          "detail": "format: no x402 payment challenge detected (no payment-required header, no x402Version in body)"
-        }
-      ]
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 74,
@@ -1231,21 +1204,12 @@
       "calls_30d": 129,
       "endpoints": 1,
       "wire_version": [
-        "?"
+        "2"
       ],
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "warn_endpoints": 0,
-      "fail_endpoints": 2,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "status: expected HTTP 402, got 400"
-        },
-        {
-          "level": "FAIL",
-          "detail": "format: no x402 payment challenge detected (no payment-required header, no x402Version in body)"
-        }
-      ]
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 85,
@@ -2018,21 +1982,12 @@
       "calls_30d": 55,
       "endpoints": 1,
       "wire_version": [
-        "?"
+        "2"
       ],
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "warn_endpoints": 0,
-      "fail_endpoints": 2,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "status: expected HTTP 402, got 400"
-        },
-        {
-          "level": "FAIL",
-          "detail": "format: no x402 payment challenge detected (no payment-required header, no x402Version in body)"
-        }
-      ]
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 143,
