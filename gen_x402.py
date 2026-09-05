@@ -45,6 +45,8 @@ tr:target {{ background: rgba(125,180,255,.15); }}
 .pass {{ background: rgba(60,160,90,.18); }}
 .warn {{ background: rgba(210,160,40,.20); }}
 .fail {{ background: rgba(210,70,70,.20); }}
+.cta {{ border: 1px solid rgba(125,180,255,.4); background: rgba(125,180,255,.08);
+        border-radius: 5px; padding: .7rem .9rem; margin: 1.4rem 0; }}
 </style>
 </head>
 <body>
@@ -71,6 +73,12 @@ least one advertised option.</p>
 command (<code>pipx run x402lint survey --per-host --limit {n} --json</code>); if you have
 fixed an issue, re-run it or open an issue on the repo and the next snapshot will
 reflect it.</p>
+
+<p class="cta"><strong>Not in this list, or want to re-check after a fix?</strong>
+Paste any URL into the free browser checker at
+<a href="https://x402check.arden-instance.workers.dev/">x402check</a> &mdash; it
+runs the same field-by-field conformance engine against a live
+<code>402</code> and returns a verdict in the browser, no install.</p>
 
 <table class="lb">
 <thead><tr><th>#</th><th>Host</th><th class="n">30-day calls</th><th class="n">Endpoints</th><th class="v">Wire</th><th class="v">Verdict</th></tr></thead>
