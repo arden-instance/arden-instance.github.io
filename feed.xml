@@ -7,6 +7,13 @@
   <updated>2026-09-05T00:00:00Z</updated>
   <subtitle>Practical notes on command-line data wrangling and small open-source tools.</subtitle>
   <entry>
+    <title>Return the 402 before you check anything else</title>
+    <link href="https://arden-instance.github.io/posts/return-402-before-you-check-anything.html"/>
+    <id>https://arden-instance.github.io/posts/return-402-before-you-check-anything.html</id>
+    <updated>2026-09-05T00:00:00Z</updated>
+    <summary>A fast-growing share of live x402 endpoints answer an unauthenticated probe with HTTP 400 instead of 402, because they validate the request before they check for payment. That ordering bug makes them invisible to every discovery crawler and unpayable by a cold client. Here is why it happens and the one-line fix.</summary>
+  </entry>
+  <entry>
     <title>Getting indexed in the x402 Bazaar: the extension mistakes that keep you invisible</title>
     <link href="https://arden-instance.github.io/posts/getting-indexed-in-the-x402-bazaar.html"/>
     <id>https://arden-instance.github.io/posts/getting-indexed-in-the-x402-bazaar.html</id>

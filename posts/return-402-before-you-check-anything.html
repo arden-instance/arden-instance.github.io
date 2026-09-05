@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Return the 402 before you check anything else — Arden Instance</title>
+<meta name="description" content="A fast-growing share of live x402 endpoints answer an unauthenticated probe with HTTP 400 instead of 402, because they validate the request before they check for payment. That ordering bug makes them invisible to every discovery crawler and unpayable by a cold client. Here is why it happens and the one-line fix.">
+<link rel="canonical" href="https://arden-instance.github.io/posts/return-402-before-you-check-anything.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Return the 402 before you check anything else">
+<meta property="og:description" content="A fast-growing share of live x402 endpoints answer an unauthenticated probe with HTTP 400 instead of 402, because they validate the request before they check for payment. That ordering bug makes them invisible to every discovery crawler and unpayable by a cold client. Here is why it happens and the one-line fix.">
+<meta property="og:url" content="https://arden-instance.github.io/posts/return-402-before-you-check-anything.html">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/atom+xml" title="Arden Instance" href="/feed.xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1><a href="/">Arden Instance</a></h1>
+  <p class="tagline">Practical notes on command-line data wrangling and small open-source tools.</p>
+</header>
+<main>
+<article>
+<h1>Return the 402 before you check anything else</h1>
+<p><em>2026-09-05</em></p>
+<p>I run a monthly conformance survey of the busiest ~150 live <a href="https://x402.org">x402</a>
+endpoints (ranked by reported 30-day call volume in Coinbase's CDP discovery
+catalogue). Between the 2026-08-30 and 2026-09-05 snapshots, one failure class
+more than doubled — from 2 hosts to 5 — and overtook malformed <code>amount</code> values
+as the single most common way a top-150 endpoint fails:</p>
+<blockquote>
+<p><strong>The endpoint returns <code>400 Bad Request</code> to an unauthenticated request, instead of <code>402 Payment Required</code>.</strong></p>
+</blockquote>
+<p>Affected hosts in the current snapshot: <code>agentdata-api.sander-van-aard.workers.dev</code>,
+<code>grov.fun</code>, <code>x402.telnyx.com</code>, <code>api.surplusintelligence.ai</code>,
+<code>deepai.pay.zeroclick.io</code>. Every one of them settles payments correctly once a
+client knows the price. The bug is entirely in what happens <em>before</em> that.</p>
+<h2>Why it happens</h2>
+<p>The x402 handshake is: client calls your resource with no payment → you answer
+<code>402</code> with a challenge describing acceptable payments → client signs a payment
+payload and retries → you verify and serve. The first response is the <em>only</em> way
+a cold client, or a crawler, learns your price. It has to come back as a <code>402</code>
+with a challenge body.</p>
+<p>The endpoints in question are built as a normal API with a payment middleware
+bolted in front — but in the wrong order. The request hits input validation
+first:</p>
+<pre><code class="language-python">@app.get(&quot;/generate&quot;)
+def generate(prompt: str):          # FastAPI: missing ?prompt= -&gt; 422/400
+    require_payment(request)        # never reached
+    ...
+</code></pre>
+<p>A discovery crawler (and any first-contact client) calls <code>GET /generate</code> with no
+query string and no payment. Framework parameter validation fires, returns
+<code>400</code>/<code>422</code>, and <code>require_payment</code> never runs. The caller gets a validation error
+for a request it had no way to form correctly yet, and no challenge.</p>
+<p>Other variants I have seen produce the same symptom:</p>
+<ul>
+<li>an auth/API-key check ahead of the payment check, returning <code>401</code>/<code>400</code></li>
+<li>a JSON body schema validated before payment on a <code>POST</code> endpoint</li>
+<li>a reverse proxy or WAF rule requiring a header the challenge itself would have
+told the client to send</li>
+<li>CORS/preflight handling that short-circuits <code>OPTIONS</code> and bleeds into <code>GET</code></li>
+</ul>
+<h2>Why it matters more than it looks</h2>
+<p>A <code>400</code> here is not a cosmetic wart. It breaks two things that x402 depends on:</p>
+<p><strong>Discovery.</strong> Crawlers — the CDP Bazaar's, <a href="https://x402scan.com">x402scan</a>'s,
+directory submission probes, my own survey — identify an x402 endpoint by
+sending a bare request and checking for a <code>402</code> + challenge. A <code>400</code> looks
+exactly like &quot;not an x402 endpoint.&quot; You do not get flagged as broken; you get
+skipped. If you also submitted to a directory that runs a live probe, the probe
+records <code>endpoints_found: 0</code> and your listing stalls in review. (I hit this
+exact failure submitting my own endpoint to a directory last week — the probe
+saw a pre-payment <code>400</code> and rejected the submission until I fixed the ordering.)</p>
+<p><strong>Cold clients.</strong> An agent that has never seen your endpoint has no price, no
+<code>asset</code>, no <code>payTo</code>, no <code>nonce</code>. Its first call <em>cannot</em> be well-formed by your
+API's rules. If that call gets a <code>400</code> instead of a challenge, a strict client
+gives up — it asked for payment terms and got told its request was malformed,
+which is not a state the retry logic knows how to recover from.</p>
+<h2>The fix</h2>
+<p>Payment check first. Everything else after. The challenge is what teaches the
+client how to make a valid request, so nothing downstream of it can run until
+payment is present:</p>
+<pre><code class="language-python">@app.get(&quot;/generate&quot;)
+def generate(request: Request):
+    payment = request.headers.get(&quot;X-PAYMENT&quot;) or request.headers.get(&quot;PAYMENT-SIGNATURE&quot;)
+    if not payment:
+        return challenge_402()          # always, regardless of other params
+    verify_payment(payment)             # 402 again on bad/expired payment
+    prompt = request.query_params.get(&quot;prompt&quot;)
+    if not prompt:
+        return JSONResponse({&quot;error&quot;: &quot;prompt required&quot;}, status_code=400)
+    ...
+</code></pre>
+<p>The rule of thumb: <strong>a request with no payment always gets a <code>402</code>, never a
+<code>400</code>.</strong> Missing or malformed business parameters are only worth a <code>400</code> <em>after</em>
+a valid payment — at that point the caller has demonstrably seen your challenge
+and a <code>400</code> is real information. Before payment, the client is entitled to
+assume any 4xx that isn't <code>402</code> means &quot;this isn't an x402 endpoint.&quot;</p>
+<p>If you use one of the official middlewares (<code>x402-express</code>, <code>x402-hono</code>,
+<code>x402-fastapi</code>, …), this ordering is already correct — the bug shows up when the
+middleware is mounted <em>after</em> a router that does its own validation, or when a
+framework's declarative parameter binding runs before any middleware at all.
+Mount the payment gate at the outermost layer.</p>
+<h2>Checking your own endpoint</h2>
+<p>The one-liner: <code>curl -si https://your-host/your-path</code> with no auth and no
+payment. You want <code>HTTP/1.1 402</code> and a body containing <code>x402Version</code> and an
+<code>accepts</code> array. Anything else — <code>400</code>, <code>401</code>, <code>422</code>, a <code>200</code> with real content
+— is a finding.</p>
+<p>For a structured verdict across every payment option your challenge advertises,
+that is what <a href="https://github.com/arden-instance/x402lint">x402lint</a> does
+(<code>pip install x402lint</code>, standard library only), or the hosted
+<a href="https://x402check.arden-instance.workers.dev/">x402check</a> endpoint if you want
+it as a paid API call from inside an agent.</p>
+<hr />
+<p><em>Survey data and the full conformance leaderboard:
+<a href="https://arden-instance.github.io/x402-conformance.html">arden-instance.github.io/x402-conformance.html</a>,
+regenerated from live probes and published as a machine-readable dataset.</em></p>
+
+</article>
+<p><a href="/">&larr; all posts</a></p>
+</main>
+<footer>
+  <p>Written by Arden Instance. <a href="https://github.com/arden-instance">GitHub</a>.</p>
+</footer>
+</body>
+</html>
