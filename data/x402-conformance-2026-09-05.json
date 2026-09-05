@@ -4,7 +4,7 @@
   "generator": "x402lint survey --per-host --limit 150 --json",
   "source_population": "Coinbase CDP discovery catalogue, ranked by reported 30-day call volume; top N resources",
   "endpoints_total": 150,
-  "endpoints_conformant": 142,
+  "endpoints_conformant": 144,
   "hosts_total": 150,
   "verdict_legend": {
     "PASS": "an agent runtime can parse and pay every advertised option with no special-casing",
@@ -16,7 +16,7 @@
     {
       "rank": 1,
       "host": "stableenrich.dev",
-      "calls_30d": 41953,
+      "calls_30d": 41597,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -35,7 +35,7 @@
     {
       "rank": 2,
       "host": "x402.twit.sh",
-      "calls_30d": 9141,
+      "calls_30d": 9128,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -48,7 +48,7 @@
     {
       "rank": 3,
       "host": "x402.sniperx.fun",
-      "calls_30d": 6191,
+      "calls_30d": 6388,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -61,7 +61,7 @@
     {
       "rank": 4,
       "host": "api.exa.ai",
-      "calls_30d": 5822,
+      "calls_30d": 5825,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -74,7 +74,7 @@
     {
       "rank": 5,
       "host": "stabletravel.dev",
-      "calls_30d": 5107,
+      "calls_30d": 5120,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -112,7 +112,7 @@
     {
       "rank": 7,
       "host": "win.oneshotagent.com",
-      "calls_30d": 4277,
+      "calls_30d": 4331,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -138,7 +138,7 @@
     {
       "rank": 9,
       "host": "api.deepnets.ai",
-      "calls_30d": 3039,
+      "calls_30d": 2993,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -151,7 +151,7 @@
     {
       "rank": 10,
       "host": "x402.ottoai.services",
-      "calls_30d": 2519,
+      "calls_30d": 2509,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -164,7 +164,7 @@
     {
       "rank": 11,
       "host": "blockrun.ai",
-      "calls_30d": 2173,
+      "calls_30d": 2066,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -183,7 +183,7 @@
     {
       "rank": 12,
       "host": "kronossignals.com",
-      "calls_30d": 2137,
+      "calls_30d": 2061,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -196,7 +196,7 @@
     {
       "rank": 13,
       "host": "api.strale.io",
-      "calls_30d": 1906,
+      "calls_30d": 1879,
       "endpoints": 1,
       "wire_version": [
         "1"
@@ -209,54 +209,22 @@
     {
       "rank": 14,
       "host": "token4u.ai",
-      "calls_30d": 1824,
+      "calls_30d": 1810,
       "endpoints": 1,
       "wire_version": [
         "2"
       ],
       "verdict": "FAIL",
-      "warn_endpoints": 3,
-      "fail_endpoints": 9,
+      "warn_endpoints": 10,
+      "fail_endpoints": 1,
       "findings": [
         {
           "level": "FAIL",
-          "detail": "accepts[2].required: missing fields: amount, asset, payTo, maxTimeoutSeconds"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[2].amount: 'amount' must be a base-10 string of a positive integer, got None"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[2].asset: 'asset' is not a 0x + 40 hex EVM address: None"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[2].payTo: 'payTo' is not a 0x + 40 hex EVM address: None"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[2].maxTimeoutSeconds: must be a positive number, got None"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[3].required: missing fields: asset, payTo"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[3].amount: 'amount' must be a base-10 string of a positive integer, got '0.00'"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[3].asset: 'asset' missing or empty"
-        },
-        {
-          "level": "FAIL",
-          "detail": "accepts[3].payTo: 'payTo' missing or empty"
+          "detail": "accepts[2].required: missing fields: amount"
         },
         {
           "level": "WARN",
-          "endpoints": 3,
+          "endpoints": 10,
           "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
         }
       ]
@@ -264,22 +232,18 @@
     {
       "rank": 15,
       "host": "x402.tavily.com",
-      "calls_30d": 1794,
+      "calls_30d": 1774,
       "endpoints": 1,
       "wire_version": [
         "2"
       ],
-      "verdict": "FAIL",
-      "warn_endpoints": 1,
-      "fail_endpoints": 1,
+      "verdict": "WARN",
+      "warn_endpoints": 2,
+      "fail_endpoints": 0,
       "findings": [
         {
-          "level": "FAIL",
-          "detail": "accepts[1].amount: 'amount' must be a base-10 string of a positive integer, got '0.016'"
-        },
-        {
           "level": "WARN",
-          "endpoints": 1,
+          "endpoints": 2,
           "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
         }
       ]
@@ -300,7 +264,7 @@
     {
       "rank": 17,
       "host": "api.nansen.ai",
-      "calls_30d": 1507,
+      "calls_30d": 1509,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -313,7 +277,7 @@
     {
       "rank": 18,
       "host": "google-trends.use.x402atlas.com",
-      "calls_30d": 1355,
+      "calls_30d": 1352,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -326,7 +290,7 @@
     {
       "rank": 19,
       "host": "api.loyalspark.online",
-      "calls_30d": 1320,
+      "calls_30d": 1310,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -339,7 +303,7 @@
     {
       "rank": 20,
       "host": "api.onesource.io",
-      "calls_30d": 1291,
+      "calls_30d": 1268,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -352,7 +316,7 @@
     {
       "rank": 21,
       "host": "x402-api.aubr.ai",
-      "calls_30d": 749,
+      "calls_30d": 756,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -370,8 +334,8 @@
     },
     {
       "rank": 22,
-      "host": "stockwaves.net",
-      "calls_30d": 746,
+      "host": "api.geoprimitives.dev",
+      "calls_30d": 744,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -383,8 +347,8 @@
     },
     {
       "rank": 23,
-      "host": "api.geoprimitives.dev",
-      "calls_30d": 743,
+      "host": "stockwaves.net",
+      "calls_30d": 729,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -409,19 +373,6 @@
     },
     {
       "rank": 25,
-      "host": "x402engine.app",
-      "calls_30d": 599,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 26,
       "host": "x402stock.xyz",
       "calls_30d": 568,
       "endpoints": 1,
@@ -440,7 +391,7 @@
       ]
     },
     {
-      "rank": 27,
+      "rank": 26,
       "host": "agent402.tools",
       "calls_30d": 553,
       "endpoints": 1,
@@ -459,7 +410,7 @@
       ]
     },
     {
-      "rank": 28,
+      "rank": 27,
       "host": "agent.api.0x.org",
       "calls_30d": 553,
       "endpoints": 1,
@@ -472,9 +423,22 @@
       "findings": []
     },
     {
-      "rank": 29,
+      "rank": 28,
       "host": "tick.hugen.tokyo",
-      "calls_30d": 548,
+      "calls_30d": 551,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 29,
+      "host": "x402engine.app",
+      "calls_30d": 551,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -487,7 +451,7 @@
     {
       "rank": 30,
       "host": "www.x402scan.com",
-      "calls_30d": 542,
+      "calls_30d": 541,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -506,7 +470,7 @@
     {
       "rank": 31,
       "host": "svm402.com",
-      "calls_30d": 529,
+      "calls_30d": 537,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -532,7 +496,7 @@
     {
       "rank": 33,
       "host": "vibesprings.net",
-      "calls_30d": 485,
+      "calls_30d": 486,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -544,8 +508,8 @@
     },
     {
       "rank": 34,
-      "host": "2s.io",
-      "calls_30d": 462,
+      "host": "crypto.apitoll.cloud",
+      "calls_30d": 452,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -557,8 +521,8 @@
     },
     {
       "rank": 35,
-      "host": "crypto.apitoll.cloud",
-      "calls_30d": 451,
+      "host": "2s.io",
+      "calls_30d": 448,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -610,7 +574,7 @@
     {
       "rank": 39,
       "host": "api.myceliasignal.com",
-      "calls_30d": 317,
+      "calls_30d": 315,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -644,19 +608,6 @@
     },
     {
       "rank": 41,
-      "host": "api.printmoneylab.com",
-      "calls_30d": 292,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 42,
       "host": "api.arkm.com",
       "calls_30d": 290,
       "endpoints": 1,
@@ -673,6 +624,19 @@
           "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
         }
       ]
+    },
+    {
+      "rank": 42,
+      "host": "api.printmoneylab.com",
+      "calls_30d": 287,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
     },
     {
       "rank": 43,
@@ -724,6 +688,19 @@
     },
     {
       "rank": 46,
+      "host": "x402.orthogonal.com",
+      "calls_30d": 261,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 47,
       "host": "openrelay.hggfffdfy687.workers.dev",
       "calls_30d": 255,
       "endpoints": 1,
@@ -736,7 +713,7 @@
       "findings": []
     },
     {
-      "rank": 47,
+      "rank": 48,
       "host": "cheaptokens.ai",
       "calls_30d": 249,
       "endpoints": 1,
@@ -755,7 +732,7 @@
       ]
     },
     {
-      "rank": 48,
+      "rank": 49,
       "host": "api.clawfetch.ai",
       "calls_30d": 249,
       "endpoints": 1,
@@ -768,7 +745,7 @@
       "findings": []
     },
     {
-      "rank": 49,
+      "rank": 50,
       "host": "proxy.suverse.io",
       "calls_30d": 241,
       "endpoints": 1,
@@ -787,7 +764,7 @@
       ]
     },
     {
-      "rank": 50,
+      "rank": 51,
       "host": "x402.glassnode.com",
       "calls_30d": 234,
       "endpoints": 1,
@@ -800,7 +777,7 @@
       "findings": []
     },
     {
-      "rank": 51,
+      "rank": 52,
       "host": "molecular-packs-metadata-docs.trycloudflare.com",
       "calls_30d": 230,
       "endpoints": 1,
@@ -813,7 +790,7 @@
       "findings": []
     },
     {
-      "rank": 52,
+      "rank": 53,
       "host": "api.delx.ai",
       "calls_30d": 223,
       "endpoints": 1,
@@ -826,35 +803,9 @@
       "findings": []
     },
     {
-      "rank": 53,
-      "host": "x402.shizu.me",
-      "calls_30d": 218,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
       "rank": 54,
-      "host": "human.twin3.ai",
-      "calls_30d": 218,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 55,
       "host": "stableupload.dev",
-      "calls_30d": 217,
+      "calls_30d": 218,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -871,7 +822,33 @@
       ]
     },
     {
+      "rank": 55,
+      "host": "x402.shizu.me",
+      "calls_30d": 216,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
       "rank": 56,
+      "host": "human.twin3.ai",
+      "calls_30d": 216,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 57,
       "host": "api.agentstools.dev",
       "calls_30d": 210,
       "endpoints": 1,
@@ -884,7 +861,7 @@
       "findings": []
     },
     {
-      "rank": 57,
+      "rank": 58,
       "host": "coinflip402.vercel.app",
       "calls_30d": 203,
       "endpoints": 1,
@@ -897,7 +874,7 @@
       "findings": []
     },
     {
-      "rank": 58,
+      "rank": 59,
       "host": "x402uselessfacts.vercel.app",
       "calls_30d": 200,
       "endpoints": 1,
@@ -910,7 +887,7 @@
       "findings": []
     },
     {
-      "rank": 59,
+      "rank": 60,
       "host": "x402lifeadvice.vercel.app",
       "calls_30d": 199,
       "endpoints": 1,
@@ -923,7 +900,7 @@
       "findings": []
     },
     {
-      "rank": 60,
+      "rank": 61,
       "host": "ladyfortunalx402.vercel.app",
       "calls_30d": 192,
       "endpoints": 1,
@@ -936,7 +913,7 @@
       "findings": []
     },
     {
-      "rank": 61,
+      "rank": 62,
       "host": "api.linkedpanda.com",
       "calls_30d": 192,
       "endpoints": 1,
@@ -955,7 +932,7 @@
       ]
     },
     {
-      "rank": 62,
+      "rank": 63,
       "host": "dicex402.vercel.app",
       "calls_30d": 191,
       "endpoints": 1,
@@ -968,7 +945,7 @@
       "findings": []
     },
     {
-      "rank": 63,
+      "rank": 64,
       "host": "memegeneratorx402.vercel.app",
       "calls_30d": 189,
       "endpoints": 1,
@@ -981,22 +958,9 @@
       "findings": []
     },
     {
-      "rank": 64,
+      "rank": 65,
       "host": "riddlex402.vercel.app",
       "calls_30d": 185,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 65,
-      "host": "chat.gedx402.com",
-      "calls_30d": 182,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1021,8 +985,8 @@
     },
     {
       "rank": 67,
-      "host": "options.lonestaroracle.xyz",
-      "calls_30d": 177,
+      "host": "chat.gedx402.com",
+      "calls_30d": 180,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1034,8 +998,8 @@
     },
     {
       "rank": 68,
-      "host": "x402.ochinimus.app",
-      "calls_30d": 170,
+      "host": "options.lonestaroracle.xyz",
+      "calls_30d": 171,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1079,8 +1043,8 @@
     },
     {
       "rank": 71,
-      "host": "x402wordoftheday.vercel.app",
-      "calls_30d": 161,
+      "host": "x402.ochinimus.app",
+      "calls_30d": 164,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1092,8 +1056,21 @@
     },
     {
       "rank": 72,
-      "host": "x402.telnyx.com",
+      "host": "x402wordoftheday.vercel.app",
       "calls_30d": 160,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 73,
+      "host": "x402.telnyx.com",
+      "calls_30d": 158,
       "endpoints": 1,
       "wire_version": [
         "?"
@@ -1113,33 +1090,7 @@
       ]
     },
     {
-      "rank": 73,
-      "host": "roastx402endpoint.vercel.app",
-      "calls_30d": 156,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
       "rank": 74,
-      "host": "randomfactsx402.vercel.app",
-      "calls_30d": 153,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 75,
       "host": "readx.sh",
       "calls_30d": 153,
       "endpoints": 1,
@@ -1152,7 +1103,7 @@
       "findings": []
     },
     {
-      "rank": 76,
+      "rank": 75,
       "host": "surf.cascade.fyi",
       "calls_30d": 152,
       "endpoints": 1,
@@ -1165,9 +1116,9 @@
       "findings": []
     },
     {
-      "rank": 77,
+      "rank": 76,
       "host": "cryptyx.ai",
-      "calls_30d": 145,
+      "calls_30d": 146,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1178,9 +1129,9 @@
       "findings": []
     },
     {
-      "rank": 78,
+      "rank": 77,
       "host": "stablestudio.dev",
-      "calls_30d": 141,
+      "calls_30d": 142,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1197,9 +1148,22 @@
       ]
     },
     {
+      "rank": 78,
+      "host": "roastx402endpoint.vercel.app",
+      "calls_30d": 137,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
       "rank": 79,
-      "host": "regimeshift.xyz",
-      "calls_30d": 138,
+      "host": "randomfactsx402.vercel.app",
+      "calls_30d": 137,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1224,6 +1188,19 @@
     },
     {
       "rank": 81,
+      "host": "regimeshift.xyz",
+      "calls_30d": 133,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 82,
       "host": "api.x402node.dev",
       "calls_30d": 132,
       "endpoints": 1,
@@ -1236,7 +1213,7 @@
       "findings": []
     },
     {
-      "rank": 82,
+      "rank": 83,
       "host": "data.greeneris.io",
       "calls_30d": 130,
       "endpoints": 1,
@@ -1249,7 +1226,7 @@
       "findings": []
     },
     {
-      "rank": 83,
+      "rank": 84,
       "host": "api.surplusintelligence.ai",
       "calls_30d": 129,
       "endpoints": 1,
@@ -1271,7 +1248,7 @@
       ]
     },
     {
-      "rank": 84,
+      "rank": 85,
       "host": "rubric-protocol.com",
       "calls_30d": 128,
       "endpoints": 1,
@@ -1284,22 +1261,9 @@
       "findings": []
     },
     {
-      "rank": 85,
+      "rank": 86,
       "host": "cars2026.vercel.app",
       "calls_30d": 126,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 86,
-      "host": "weight402endpoint.vercel.app",
-      "calls_30d": 125,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1324,8 +1288,8 @@
     },
     {
       "rank": 88,
-      "host": "api.vindexapi.dev",
-      "calls_30d": 118,
+      "host": "websearch.use.x402atlas.com",
+      "calls_30d": 122,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1350,8 +1314,8 @@
     },
     {
       "rank": 90,
-      "host": "api.oblique.markets",
-      "calls_30d": 113,
+      "host": "api.vindexapi.dev",
+      "calls_30d": 116,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1363,7 +1327,7 @@
     },
     {
       "rank": 91,
-      "host": "websearch.use.x402atlas.com",
+      "host": "api.oblique.markets",
       "calls_30d": 113,
       "endpoints": 1,
       "wire_version": [
@@ -1428,6 +1392,19 @@
     },
     {
       "rank": 96,
+      "host": "weight402endpoint.vercel.app",
+      "calls_30d": 108,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 97,
       "host": "76.13.79.47.nip.io",
       "calls_30d": 107,
       "endpoints": 1,
@@ -1440,7 +1417,7 @@
       "findings": []
     },
     {
-      "rank": 97,
+      "rank": 98,
       "host": "agi.apify.com",
       "calls_30d": 105,
       "endpoints": 1,
@@ -1453,7 +1430,7 @@
       "findings": []
     },
     {
-      "rank": 98,
+      "rank": 99,
       "host": "groq.x402.stage.paywithlocus.com",
       "calls_30d": 104,
       "endpoints": 1,
@@ -1466,7 +1443,7 @@
       "findings": []
     },
     {
-      "rank": 99,
+      "rank": 100,
       "host": "x402-tokens.fly.dev",
       "calls_30d": 104,
       "endpoints": 1,
@@ -1479,7 +1456,7 @@
       "findings": []
     },
     {
-      "rank": 100,
+      "rank": 101,
       "host": "www.stablebrowser.dev",
       "calls_30d": 103,
       "endpoints": 1,
@@ -1498,7 +1475,7 @@
       ]
     },
     {
-      "rank": 101,
+      "rank": 102,
       "host": "402utils.com",
       "calls_30d": 102,
       "endpoints": 1,
@@ -1511,7 +1488,7 @@
       "findings": []
     },
     {
-      "rank": 102,
+      "rank": 103,
       "host": "api.safe4.ai",
       "calls_30d": 99,
       "endpoints": 1,
@@ -1530,7 +1507,7 @@
       ]
     },
     {
-      "rank": 103,
+      "rank": 104,
       "host": "spawnxchange-api-485602182462.europe-west4.run.app",
       "calls_30d": 91,
       "endpoints": 1,
@@ -1543,7 +1520,7 @@
       "findings": []
     },
     {
-      "rank": 104,
+      "rank": 105,
       "host": "x402-echo-service.onrender.com",
       "calls_30d": 89,
       "endpoints": 1,
@@ -1556,9 +1533,9 @@
       "findings": []
     },
     {
-      "rank": 105,
+      "rank": 106,
       "host": "omniguchi.0000402.xyz",
-      "calls_30d": 86,
+      "calls_30d": 87,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1569,7 +1546,7 @@
       "findings": []
     },
     {
-      "rank": 106,
+      "rank": 107,
       "host": "sandbox.node4all.com",
       "calls_30d": 83,
       "endpoints": 1,
@@ -1582,7 +1559,7 @@
       "findings": []
     },
     {
-      "rank": 107,
+      "rank": 108,
       "host": "anthropic.x402.stage.paywithlocus.com",
       "calls_30d": 82,
       "endpoints": 1,
@@ -1595,7 +1572,7 @@
       "findings": []
     },
     {
-      "rank": 108,
+      "rank": 109,
       "host": "weather.payapi.market",
       "calls_30d": 80,
       "endpoints": 1,
@@ -1608,7 +1585,7 @@
       "findings": []
     },
     {
-      "rank": 109,
+      "rank": 110,
       "host": "kleros-ipfs-gateway.fly.dev",
       "calls_30d": 79,
       "endpoints": 1,
@@ -1621,7 +1598,7 @@
       "findings": []
     },
     {
-      "rank": 110,
+      "rank": 111,
       "host": "api.gitbeacon.dev",
       "calls_30d": 76,
       "endpoints": 1,
@@ -1634,22 +1611,9 @@
       "findings": []
     },
     {
-      "rank": 111,
+      "rank": 112,
       "host": "x402-endpoints.onrender.com",
       "calls_30d": 76,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 112,
-      "host": "api.orcatrace.dev",
-      "calls_30d": 75,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1674,8 +1638,8 @@
     },
     {
       "rank": 114,
-      "host": "edgar.apitoll.cloud",
-      "calls_30d": 73,
+      "host": "api.orcatrace.dev",
+      "calls_30d": 74,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1687,8 +1651,8 @@
     },
     {
       "rank": 115,
-      "host": "api.signalis.dev",
-      "calls_30d": 73,
+      "host": "edgar.apitoll.cloud",
+      "calls_30d": 72,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1700,7 +1664,7 @@
     },
     {
       "rank": 116,
-      "host": "hunter.x402.paywithlocus.com",
+      "host": "api.signalis.dev",
       "calls_30d": 72,
       "endpoints": 1,
       "wire_version": [
@@ -1713,6 +1677,19 @@
     },
     {
       "rank": 117,
+      "host": "hunter.x402.paywithlocus.com",
+      "calls_30d": 72,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 118,
       "host": "trace.sociologic.ai",
       "calls_30d": 71,
       "endpoints": 1,
@@ -1725,7 +1702,7 @@
       "findings": []
     },
     {
-      "rank": 118,
+      "rank": 119,
       "host": "pro-api.coinmarketcap.com",
       "calls_30d": 70,
       "endpoints": 1,
@@ -1738,7 +1715,7 @@
       "findings": []
     },
     {
-      "rank": 119,
+      "rank": 120,
       "host": "api.demandex.dev",
       "calls_30d": 70,
       "endpoints": 1,
@@ -1751,22 +1728,9 @@
       "findings": []
     },
     {
-      "rank": 120,
+      "rank": 121,
       "host": "api.moltalyzer.xyz",
       "calls_30d": 69,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 121,
-      "host": "gas.apitoll.cloud",
-      "calls_30d": 68,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -1791,6 +1755,19 @@
     },
     {
       "rank": 123,
+      "host": "gas.apitoll.cloud",
+      "calls_30d": 66,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 124,
       "host": "api.isocast.dev",
       "calls_30d": 65,
       "endpoints": 1,
@@ -1803,7 +1780,7 @@
       "findings": []
     },
     {
-      "rank": 124,
+      "rank": 125,
       "host": "agents.ai-rook.com",
       "calls_30d": 65,
       "endpoints": 1,
@@ -1816,7 +1793,20 @@
       "findings": []
     },
     {
-      "rank": 125,
+      "rank": 126,
+      "host": "quotient-api-gateway.onrender.com",
+      "calls_30d": 63,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
+      "rank": 127,
       "host": "api.dripmetrics.ai",
       "calls_30d": 62,
       "endpoints": 1,
@@ -1829,7 +1819,7 @@
       "findings": []
     },
     {
-      "rank": 126,
+      "rank": 128,
       "host": "website2vat.com",
       "calls_30d": 62,
       "endpoints": 1,
@@ -1842,7 +1832,7 @@
       "findings": []
     },
     {
-      "rank": 127,
+      "rank": 129,
       "host": "x402.aispace.bot",
       "calls_30d": 61,
       "endpoints": 1,
@@ -1855,7 +1845,7 @@
       "findings": []
     },
     {
-      "rank": 128,
+      "rank": 130,
       "host": "stablepeopledata.dev",
       "calls_30d": 61,
       "endpoints": 1,
@@ -1874,20 +1864,7 @@
       ]
     },
     {
-      "rank": 129,
-      "host": "evm-gas.apitoll.cloud",
-      "calls_30d": 60,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 130,
+      "rank": 131,
       "host": "api.sirenic.eu",
       "calls_30d": 60,
       "endpoints": 1,
@@ -1900,7 +1877,7 @@
       "findings": []
     },
     {
-      "rank": 131,
+      "rank": 132,
       "host": "api.socialfetch.dev",
       "calls_30d": 60,
       "endpoints": 1,
@@ -1913,7 +1890,7 @@
       "findings": []
     },
     {
-      "rank": 132,
+      "rank": 133,
       "host": "api.truthbear.co",
       "calls_30d": 60,
       "endpoints": 1,
@@ -1926,56 +1903,7 @@
       "findings": []
     },
     {
-      "rank": 133,
-      "host": "gridpulse.theaslangroupllc.com",
-      "calls_30d": 59,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "FAIL",
-      "warn_endpoints": 1,
-      "fail_endpoints": 1,
-      "findings": [
-        {
-          "level": "FAIL",
-          "detail": "accepts[11].amount: 'amount' must be a base-10 string of a positive integer, got '0.01'"
-        },
-        {
-          "level": "WARN",
-          "endpoints": 1,
-          "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
-        }
-      ]
-    },
-    {
       "rank": 134,
-      "host": "store.agentexchange.work",
-      "calls_30d": 59,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 135,
-      "host": "apexrunner.ai",
-      "calls_30d": 59,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 136,
       "host": "agents.driftflight.com",
       "calls_30d": 59,
       "endpoints": 1,
@@ -1988,9 +1916,9 @@
       "findings": []
     },
     {
-      "rank": 137,
-      "host": "x402.orthogonal.com",
-      "calls_30d": 59,
+      "rank": 135,
+      "host": "evm-gas.apitoll.cloud",
+      "calls_30d": 58,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -2001,7 +1929,7 @@
       "findings": []
     },
     {
-      "rank": 138,
+      "rank": 136,
       "host": "api.you.com",
       "calls_30d": 58,
       "endpoints": 1,
@@ -2014,7 +1942,7 @@
       "findings": []
     },
     {
-      "rank": 139,
+      "rank": 137,
       "host": "signal-engine-production-d88d.up.railway.app",
       "calls_30d": 58,
       "endpoints": 1,
@@ -2027,8 +1955,40 @@
       "findings": []
     },
     {
+      "rank": 138,
+      "host": "gridpulse.theaslangroupllc.com",
+      "calls_30d": 57,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "WARN",
+      "warn_endpoints": 2,
+      "fail_endpoints": 0,
+      "findings": [
+        {
+          "level": "WARN",
+          "endpoints": 2,
+          "detail": "challenge omits the optional top-level 'error' string (spec-legal but lossy on a failed payment)"
+        }
+      ]
+    },
+    {
+      "rank": 139,
+      "host": "store.agentexchange.work",
+      "calls_30d": 57,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
       "rank": 140,
-      "host": "quotient-api-gateway.onrender.com",
+      "host": "apexrunner.ai",
       "calls_30d": 57,
       "endpoints": 1,
       "wire_version": [
@@ -2041,8 +2001,8 @@
     },
     {
       "rank": 141,
-      "host": "weather.hugen.tokyo",
-      "calls_30d": 56,
+      "host": "sanctions.nsgoods.org",
+      "calls_30d": 57,
       "endpoints": 1,
       "wire_version": [
         "2"
@@ -2089,7 +2049,7 @@
     },
     {
       "rank": 144,
-      "host": "email-auth.use.x402atlas.com",
+      "host": "weather.hugen.tokyo",
       "calls_30d": 54,
       "endpoints": 1,
       "wire_version": [
@@ -2115,19 +2075,6 @@
     },
     {
       "rank": 146,
-      "host": "diet.agentic-jp.com",
-      "calls_30d": 54,
-      "endpoints": 1,
-      "wire_version": [
-        "2"
-      ],
-      "verdict": "PASS",
-      "warn_endpoints": 0,
-      "fail_endpoints": 0,
-      "findings": []
-    },
-    {
-      "rank": 147,
       "host": "api.webbersites.com",
       "calls_30d": 54,
       "endpoints": 1,
@@ -2140,7 +2087,7 @@
       "findings": []
     },
     {
-      "rank": 148,
+      "rank": 147,
       "host": "api.getplexa.com",
       "calls_30d": 54,
       "endpoints": 1,
@@ -2153,7 +2100,7 @@
       "findings": []
     },
     {
-      "rank": 149,
+      "rank": 148,
       "host": "laso.finance",
       "calls_30d": 53,
       "endpoints": 1,
@@ -2166,9 +2113,22 @@
       "findings": []
     },
     {
+      "rank": 149,
+      "host": "email-auth.use.x402atlas.com",
+      "calls_30d": 52,
+      "endpoints": 1,
+      "wire_version": [
+        "2"
+      ],
+      "verdict": "PASS",
+      "warn_endpoints": 0,
+      "fail_endpoints": 0,
+      "findings": []
+    },
+    {
       "rank": 150,
-      "host": "api.interzoid.com",
-      "calls_30d": 53,
+      "host": "diet.agentic-jp.com",
+      "calls_30d": 52,
       "endpoints": 1,
       "wire_version": [
         "2"
